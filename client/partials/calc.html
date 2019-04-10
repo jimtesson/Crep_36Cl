@@ -1,0 +1,116 @@
+<div class="container">
+  <div class="row">
+
+    <div ng-show="params.ageRes.Samples" class="col-md-8 view-row">
+      <span class="input-title" style="top:-40px;">
+        1-Results
+      </span>
+      <!-- PDF Chart -->
+      <div ng-show="resultsToggle==0" class="graph-container">
+            <nvd3-line-chart ng-class="" class="ages-graph" objectEquality="true" data="agesPDF" id="pdfGraph" xAxisTickFormat="xAxisTickFormatFunction()" yAxisTickFormat="yAxisTickFormatFunction()" showXAxis="true" showYAxis="true">
+            <svg class="ages-graph">
+            </svg>
+            <small class="gdb-x">Age(ka BP)</small>
+            <small class="gdb-y">Probability Density</small>
+            </nvd3-line-chart>
+        </div>
+      <!-- Ages Tab  -->
+      <table ng-show="resultsToggle==1" class="table table-condensed">
+        <thead>
+          <tr>
+            <th>Sample</th>
+            <th>Scaling Factor</th>
+            <th>Age(ka)</th>
+            <th>1&#963 (ka)</th>
+            <th>1&#963 without PR error</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-hide="isString(params.ageRes.Samples)" ng-repeat="entry in params.ageRes.Samples">
+            <th>{{entry}}</th>
+            <td>{{params.ageRes.ScalFact[$index] | number:2}}</td>
+            <td>{{params.ageRes.Ages[$index] | number:2}}</td>
+            <td>{{params.ageRes.AgesErr[$index] | number:2}}</td>
+            <td>{{params.ageRes.AgesErr2[$index] | number:2}}</td>
+            <td>{{params.ageRes.Status[$index]}}</td>
+          </tr>
+          <tr ng-show="isString(params.ageRes.Samples)">
+            <th>{{params.ageRes.Samples}}</th>
+            <td>{{params.ageRes.ScalFact | number:2}}</td>
+            <td>{{params.ageRes.Ages | number:2}}</td>
+            <td>{{params.ageRes.AgesErr | number:2}}</td>
+            <td>{{params.ageRes.AgesErr2 | number:2}}</td>
+            <td>{{params.ageRes.Status}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div ng-show="params.ageRes.Samples" ng-init="resultsToggle=1" class="view-row col-md-3">
+      <div class="">
+        <span class="input-title" style="top:-40px;">
+          2-Results Display
+        </span>
+        <input ng-click="tabChange()" type="radio" id="results1" ng-model="resultsToggle" ng-value="0">
+        <label for="results1">PDF (graphic)</label>
+      </div>
+      <div class="">
+        <input type="radio" id="results2" ng-model="resultsToggle" ng-value="1">
+        <label for="results2">Ages</label>
+      </div>
+      <div class="">
+        <!-- <input type="radio" id="results3" ng-click="exportPDF()"> -->
+        <label for="results3">PDF (tab)</label>
+        <a ng-href="{{apiUrl+'export/'+params.globalData.execId}}">Download</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<div ng-show="agesLoading" style="heigth:300px !important;" class="loader-container">
+  <div class="windows8">
+    <div class="wBall" id="wBall_1">
+      <div class="wInnerBall"></div>
+    </div>
+    <div class="wBall" id="wBall_2">
+      <div class="wInnerBall"></div>
+    </div>
+    <div class="wBall" id="wBall_3">
+      <div class="wInnerBall"></div>
+    </div>
+    <div class="wBall" id="wBall_4">
+      <div class="wInnerBall"></div>
+    </div>
+    <div class="wBall" id="wBall_5">
+      <div class="wInnerBall"></div>
+    </div>
+  </div>
+</div>
+<div class="row view-row col-md-7">
+    <div class="col-md-2">
+      <div class="row">
+          <button class="btn" ng-click="resetParams()">Reset</button>
+      </div>
+    </div>
+    <div class="graph-container col-md-4">
+      <strong>Chosen Parameters</strong><br>
+      <span>Nuclide : <strong ng-show="params.globalData.Nucl ==10"><sup>10</sup>Be</strong><strong ng-show="params.globalData.Nucl ==3"><sup>3</sup>He</strong></span><br>
+      <span>Scaling Scheme : <strong ng-show="params.globalData.Scheme==1">Lal Stone</strong><strong ng-show="params.globalData.Scheme==2">LSD</strong></span><br>
+      <span>Atmosphere Model : <strong ng-show="params.globalData.Atm">Standard</strong><strong ng-show="!params.globalData.Atm">ERA40</strong></span><br>
+      <span>Geomagnetic Database : <strong>{{params.globalData.gdbName}}</strong></span><br>
+    </div>
+    <div class="col-md-4">
+      <strong>Current SLHL PR</strong>
+      <div class="graph-container padding">
+        <span ng-show="params.globalData.PR[0] != 0">{{params.globalData.PR[0] | number:2}} +/- {{params.globalData.PR[1] | number:2}} at/g/yr</span>
+        <span ng-show="params.globalData.PR[0] == 0 ||params.globalData.PR[0] =='_NaN_' ">No PR Loaded</span>
+      </div>
+    </div>
+  </div>
+  <!-- End row -->
+  <div class="col-md-2"><img style="margin-top:50%; padding: 10%;" class="img-responsive" src="img/crep_mini.png"></div>
+  <div class="col-md-3 view-row">
+      <button class="btn col-md-6" ng-click="go('production-rate')">Previous</button>
+  </div>

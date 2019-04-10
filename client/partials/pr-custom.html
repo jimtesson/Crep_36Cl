@@ -1,0 +1,334 @@
+
+<div class="container" ng-init="resetMarkers();setPrMode(0);getWorldMean(params.globalData.Nucl,params.globalData.Scheme,params.globalData.Atm,params.globalData.GMDB)">
+  <!--  Begin Row  -->
+  <div class="row view-row" >
+    <div class="col-md-4" ng-hide="params.globalData.gdbName=='Custom' ">
+      <div class="row">
+        <span class="input-title">
+          1-Production Rate-
+        </span>
+        <input type="radio" id="pr1" ng-model="prToggle" ng-value="0" ng-click="setPrMode(0);getWorldMean(params.globalData.Nucl,params.globalData.Scheme,params.globalData.Atm,params.globalData.GMDB);">
+        <label for="pr1">World wide mean</label>
+      </div>
+    </div>
+    <div class="col-md-4" ng-hide="params.globalData.gdbName=='Custom'">
+      <div class="row">
+        <input type="radio" id="pr2" ng-model="prToggle" ng-value="1" ng-click="resetPr();tabChange();setPrMode(1)">
+        <label for="pr2">Local and Regional Values</label>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="row">
+        <input type="radio" id="pr3" ng-model="prToggle" ng-click="resetPr();setPrMode(3)" ng-value="2">
+        <label for="pr3">My Values</label>
+      </div>
+    </div>
+  </div>
+  <!-- End row -->
+  <!-- Begin row -->
+  <div class="row view-row" ng-show="prToggle==2">
+    <div class="col-md-3">
+      <div class="row">
+        <span class="input-title">
+          2-My Values
+        </span>
+        <input type="radio" id="custompr1" ng-model="customPrToggle" ng-value="0">
+        <label for="custompr1">My Local Production Rate</label>
+      </div>
+      <div class="row">
+        <input type="radio" id="custompr2" ng-model="customPrToggle" ng-value="1">
+        <label for="custompr2">My SLHL Production Rate</label>
+      </div>
+    </div>
+    <div class="col-md-9">
+      <div class="row">
+        <div id="customPrContainer" class="col-md-12"  ng-show="customPrToggle==0">
+          <fieldset ng-form="customPr">
+            <form class="form-inline">
+              <div class="form-group text-center col-xs-6">
+                <label class="col-xs-12 localpr-label text-center " for="age">Age (ka)</label>
+                <input ng-model="customPrInput.Age[0]" type="text" class="form-control" id="age" required placeholder="18.2">
+              </div>
+              <div class="form-group text-center col-xs-6">
+                <label class="col-xs-12 localpr-label text-center " for="age1s">1&#963(ka)</label>
+                <input ng-model="customPrInput.Age[1]" type="text" class="form-control" id="age1s" required placeholder="0.2">
+              </div>
+            </form>
+            <form class="form-inline">
+              <div class="form-group text-center col-xs-6">
+                <label class="col-xs-12 localpr-label text-center localpr-label" for="conc">Conc (at/g)</label>
+                <input ng-model="customPrInput.NuclCon" type="text" class="form-control" id="conc" required placeholder="500000"></input>
+              </div>
+              <div class="form-group text-center col-xs-6">
+                <label class="col-xs-12 localpr-label text-center localpr-label" for="conc1s">1&#963(at/g)</label>
+                <input ng-model="customPrInput.NuclErr" type="text" class="form-control" id="conc1s" required placeholder="20000"></input>
+              </div>
+            </form>
+            <form class="form-inline">
+              <div class="form-group text-center col-xs-6">
+                <label class="col-xs-12 localpr-label text-center localpr-label" for="lat">Latitude</label>
+                <input step="any" ng-model="customPrInput.Lat" type="text" class="form-control" id="lat"  required placeholder="5.154842"></input>
+              </div>
+              <div class="form-group text-center col-xs-6">
+                <label class="col-xs-12 localpr-label text-center localpr-label" for="long">Longitude</label>
+                <input step="any" ng-model="customPrInput.Lon" type="text" class="form-control" id="long" required placeholder="2.1578"></input>
+              </div>
+            </form>
+            <form class="form-inline">
+              <div class="form-group text-center col-xs-6">
+                <label class="col-xs-12 localpr-label text-center localpr-label" for="altitude">Altitude (masl)</label>
+                <input ng-model="customPrInput.Alt" type="text" class="form-control" id="altitude" required placeholder="2846"></input>
+              </div>
+              <div class="form-group text-center col-xs-6">
+                <label class="col-xs-12 localpr-label text-center localpr-label" for="erosion">Erosion Rate (cm/year)</label>
+                <input ng-model="customPrInput.Eros" type="text" class="form-control" id="erosion" required placeholder="0.0005"></input>
+              </div>
+            </form>
+          </fieldset>
+          <!-- <button ng-click="addPrInput(customPrInput);processCustomPr();resetInputs();" ng-class="{disabled:prInputs.length}" class="btn btn-default">Submit</button> -->
+          <!-- <button ng-click="processCustomPr()" ng-class="{disabled:!prInputs.length}" class="btn btn-default"> Calculate Production Rate</button> -->
+          <!-- <table ng-show="prInputs" class="table table-condensed col-md-12" style="padding-top:5em;">
+            <thead>
+              <tr>
+                <th>Age</th>
+                <th>latitude</th>
+                <th>longitude</th>
+                <th>Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              <button  ng-class="{disabled:!prInputs.length}" class="btn btn-default" ng-click="resetInputs()">Reset</button>
+              <tr ng-repeat="entry in prInputs">
+                <th scope="row">{{entry.Age}}</th>
+                <td>{{entry.Lat}}</td>
+                <td>{{entry.Lon}}</td>
+              </tr>
+            </tbody>
+          </table> -->
+        </div>
+        <div id="slhlPrContainer" class="col-md-12" ng-show="customPrToggle==1">
+          <fieldset>
+            <form class="form-inline">
+              <div class="form-group text-center">
+                <label for="age">SLHL Production Rate</label>
+                <input ng-model="slhlInput[0]" type="text" class="form-control" id="slhl" placeholder="1.0000">
+              </div>
+              <div class="form-group text-center">
+                <label for="age1s">1&#963</label>
+                <input ng-model="slhlInput[1]" type="text" class="form-control" id="slhl1s" placeholder="0.02">
+              </div>
+            </form>
+          </fieldset>
+          <button ng-click="addSlhlInput(slhlInput)" class="btn btn-default"> Add SLHL Production Rate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- End row -->
+  
+  <!-- Map row -->
+  <div class=" container row view-row" ng-show="prToggle==1">
+
+    <form class="nav navbar form-inline">
+      <div class="form-group" style="margin-right: 25px;">
+        <button 
+        class="btn btn-default" 
+        ng-class="{active:(mapView == 'localities')}" 
+        ng-click="toggleView('localities')" 
+        id="localView">Localities View
+      </button>
+      <button 
+      class="btn btn-default" 
+      ng-class="{active:(mapView == 'regions')}" 
+      ng-click="toggleView('regions')" 
+      id="regionsView"> Regions View
+    </button>
+  </div>
+  <div class="form-group" ng-show="mapView == 'localities'">
+    <label for="minInput">Minimum Age</label>
+    <input type="number" class="form-control" id="minInput" ng-model="min" ng-change="updateMarkers(min,max)">
+    <label for="minInput">Maximum Age</label>
+    <input type="number" class="form-control" id="maxInput" ng-model="max" ng-change="updateMarkers(min,max)">
+  </div>
+</form>
+<div style="margin :10px 25px; " class="alert alert-warning row" ng-show="outside">
+  At least one of the samples is located far away from any calibration sites, which may induce systematic uncertainties. Please consider using a global production rate rather than a local or a regional production rate. ({{outside}} samples)
+</div>
+<div id="mapContainer" class="col-md-12">
+  <leaflet height="400px" layers="layers" markers="markersDisplayed" geojson="geojson" events-broadcast="events"></leaflet>
+  <div class="row map-legend">
+  <div class="col-md-4 reset">
+      <button class="btn btn-default" ng-click="resetMarkers()">Reset Selection</button>
+    </div>
+    <div class="col-md-6">
+      <div class="col-md-4 map-legend-item">
+        <img tabindex="0" alt="3808" style=" width: 25px; height: 41px;" class="leaflet-marker-icon leaflet-zoom-animated leaflet-clickable" src="data:image/png;base64,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">
+        <p>
+          Non-selected marker
+        </p>
+      </div>
+      <div class="col-md-4 map-legend-item">
+        <img tabindex="0" alt="872.6" style=" width: 25px; height: 41px; z-index : 268;" class="leaflet-marker-icon leaflet-zoom-animated selected" src="img/marker.png"> 
+        <p>
+          Selected marker
+        </p>
+      </div>
+      <div class="col-md-4 map-legend-item">
+        <img tabindex="0" alt="872.6" style=" width: 25px; height: 41px; z-index : 268;" class="leaflet-marker-icon leaflet-zoom-animated selected" src="img/marker-sample.png"> 
+        <p>
+          Sample marker 
+        </p>
+      </div>
+    </div>
+  </div>
+  <div ng-show="mapView == 'localities'" id="localities-selection">
+    <h1>Localities Selected</h1>
+    <!-- <button class="btn btn-default" ng-click="selectAllMarkers()">Select All</button> -->
+    <table ng-show="selectedMarkers" class="table table-condensed col-md-12" style="padding-top:5em;">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Age &plusmn; 1&#963 (ka)</th>
+          <th>Coordinates (Lat, Long)</th>
+          <th>Elevation (masl)</th>
+          <th>Production Rate &plusmn; 1&#963 (at/g/yr)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="entry in selectedMarkers | filter :filterSelectedMarkers as results" >
+          <th scope="row">{{entry.model.id}}</th>
+          <td>{{entry.model.name}}
+
+          </td>
+          <td>{{entry.model.age/1000|number:1+ ceil(log10(1/(entry.model.ageUns/1000)))}} &plusmn; {{entry.model.ageUns/1000|number:1+ ceil(log10(1/(entry.model.ageUns/1000)))}}</td>
+          <td>{{entry.model.lat}}, {{entry.model.lng}}</td>
+          <td>{{entry.model.alt|number:0}}</td>
+          <td ng-init="mean = getMeanForMarker(entry.model,fieldStr)">{{mean[0]|number:1+ ceil(log10(1/mean[1]))}} &plusmn; {{mean[1]|number:1+ ceil(log10(1/mean[1]))}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div ng-show="mapView == 'regions'" id="regions-selection">
+    <h1>Regions Selected</h1>
+    <table class="table table-condensed col-md-12">
+      <thead>
+        <tr>
+          <th>id</th>
+          <th>Region name</th>
+          <th>Production Rate &plusmn; 1&#963 (at/g/yr)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="entry in selectedMarkers |filter : filterSelectedRegions as results" >
+          <th scope="row">{{entry.model.id}}</th>
+          <td>{{entry.model.region_name}} </td>
+          <td ng-init="mean = getMeanForRegion(entry.model,fieldStr)">{{mean[0]|number:2}} &plusmn; {{mean[1]|number:2}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+<!-- end map row -->
+
+<!--  Begin Row  -->
+<div class="row view-row" ng-show="prToggle == 2 && customPrToggle==0">
+  <div class="col-md-4">
+    <div class="row">
+      <span class="input-title">
+        3-Display your Production Rate (at/g/yr)
+      </span>
+      <button ng-click="addPrInput(customPrInput);processCustomPr();resetInputs();" ng-class="{disabled:customPr.$invalid}" class="btn arrow_box">4-Calculate PR</button>
+    </div>
+  </div>
+  <div class="graph-container col-md-5">
+    <table  class="table table-condensed" style="padding-top:5em;">
+      <thead>
+        <tr>
+          <th>Scaling Fact.</th>
+          <th>SLHL</th>
+          <th>1&#963</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>{{params.globalData.prRes.ScalFact}}</th>
+          <td>{{params.globalData.prRes.SLHLPR[0]|number:2}}</td>
+          <td>{{params.globalData.prRes.SLHLPR[1]|number:2}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-3">
+    <button class="btn" ng-click="loadPr()">Load for Calculation</button>
+  </div>
+</div>
+<!-- End row -->
+<!--  Begin Row : PR display World Mean  -->
+<div class="row view-row" ng-show="prToggle==0">
+  <div class="col-md-12">
+    <div class="row">
+      <span class="input-title">
+        2-Display your Production Rate (at/g/yr)
+      </span>
+    </div>
+  </div>
+  <div class="graph-container col-md-4">
+    <table  class="table table-condensed" style="padding-top:5em;">
+      <thead>
+        <tr>
+          <th>SLHL</th>
+          <th>1&#963</th>
+        </tr>
+      </thead>
+      <tbody ng-show="prInputs">
+        <tr>
+          <td>{{params.globalData.PR[0]|number:2}}</td>
+          <td>{{params.globalData.PR[1]|number:2}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-3">
+    <!-- <button ng-click="loadPr()">Load for Calculation</button> -->
+  </div>
+</div>
+<!-- End row -->
+
+<div class="row view-row col-md-7">
+  <div class="col-md-2">
+    <div class="row">
+      <button class="btn" ng-click="resetParams()">Reset</button>
+    </div>
+  </div>
+  <div class="graph-container col-md-4">
+    <strong>Chosen Parameters</strong><br>
+    <span>Nuclide : <strong ng-show="params.globalData.Nucl ==10"><sup>10</sup>Be</strong><strong ng-show="params.globalData.Nucl ==3"><sup>3</sup>He</strong></span><br>
+    <span>Scaling Scheme : <strong ng-show="params.globalData.Scheme==1">Lal Stone</strong><strong ng-show="params.globalData.Scheme ==2">LSD</strong></span><br>
+    <span>Atmosphere Model : <strong ng-show="params.globalData.Atm">Standard</strong><strong ng-show="!params.globalData.Atm">ERA40</strong></span><br>
+    <span>Geomagnetic Database : <strong>{{params.globalData.gdbName}}</strong></span><br>
+  </div>
+  <div class="col-md-4">
+    <strong>
+      Current SLHL PR
+      <span ng-hide="!(selectedMarkers.length-1)">(Weighted Mean)</span>
+    </strong>
+    <div class="graph-container padding">
+      <span ng-show="params.globalData.PR[0] != 0">{{params.globalData.PR[0] | number:2}} +/- {{params.globalData.PR[1] | number:2}} at/g/yr</span>
+      <span ng-show="params.globalData.PR[0] == 0 ||params.globalData.PR[0] =='_NaN_' ">No PR Loaded</span>
+      <span ng-show="params.globalData.PR[2]">MSWD: {{params.globalData.PR[2] |number:2}}</span> <br>
+      <span ng-show="params.globalData.PR[3]">Uncertainty: {{params.globalData.PR[3]}}</span>
+    </div>
+  </div>
+</div>
+<!-- End row -->
+<div class="col-md-2"><img style="margin-top:50%; padding: 10%;" class="img-responsive" src="img/crep_mini.png"></div>
+<div class="col-md-3 view-row">
+  <button class="btn btn-default col-md-6" ng-click="go('samples')">Previous</button>
+  <!-- <button class="col-md-6" ng-click="go('calculate')">Next</button> -->
+  <button class="arrow_box" ng-hide="params.globalData.PR[0] ==0 || !isArray(sampleData) " ng-click="go('calculation'); processAges()">Calculate</button>
+</div>
+</div>
+<!-- End of container -->

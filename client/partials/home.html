@@ -1,0 +1,60 @@
+<div class="arrow-start">
+  <p>
+  	<i class="fa fa-arrow-up" aria-hidden="true"></i>
+  </p>
+  <p class="start-text">Start computing ages</p>
+</div>
+<div class="homeContainer view-row jumbotron">
+	<div class="row padding-20">
+		<ul class="home-list" >
+			<li style="font-size: 16px">
+				CREp (Cosmic Ray Exposure program) is a new Matlab©/Octave online tool to compute exposure ages using <sup>10</sup>Be and <sup>3</sup>He.
+			</li>
+			<li style="font-size: 16px">
+				This program includes both the Lal/Stone time dependent scaling model (Lal, 1991 ; Stone, 2000), and the LSD model (Lifton et al., 2014).
+				<br> Users can choose between the standard atmosphere pressure, or the ERA40 atmosphere model.<br> The time dependent correction may be done using several different Virtual Dipole Moment databases.
+						
+			</li>
+			<li style="font-size: 16px">
+				CREp is associated with a new online database, ICE-D, that includes all the existing empirical production rates calibrations.			
+			</li>
+			<li style="font-size: 16px">
+				Users can either select global, regional or local production rates to compute exposure ages.
+			</li>
+		</ul>
+		<p class="">
+			For exhaustive description of calculation: <a href="https://www.sciencedirect.com/science/article/pii/S1871101416300693"> Martin et al., 2017</a>
+		</p>
+		<p>	
+		If you have  any questions, please contact: <a href="mailto:blard@crpg.cnrs-nancy.fr">Pierre-Henri Blard: blard@crpg.cnrs-nancy.fr</a>
+		</p>
+	</div>
+
+	<leaflet id="homeMap" ng-init="getAllLocalitiesMarkers()" height="500px" layers="layers" events="noEvents" events-broadcast="noEvents" markers="allMarkers" defaults="homeMapSettings"></leaflet>
+
+	<div class="container row padding-20">
+		<h5>
+		 Present-day distribution of the calibration sites for cosmogenic 3He and 10Be production rates available in the <a href="http://calibration.ice-d.org">ICE-D database</a>
+		</h5>
+		<div style="display:inline-block; padding:5px;">
+			<div class="beMarker" style="width: 12px; height: 12px; display: inline-block; margin: -1px 10px;"></div><sup>10</sup>Be
+		</div>
+		<div style="display:inline-block; padding:5px;">
+			<div class="heMarker" style="width: 12px; height: 12px; display: inline-block; margin: -1px 10px;"></div><sup>3</sup>He
+		</div>
+		<div style="display:inline-block; padding:5px;">
+			<div class="beMarker" style=" display: inline-block; margin: -1px 10px;"></div> 0-200 m
+		</div>
+		<div style="display:inline-block; padding:5px;">
+			<div class="beMarker" style="width: 12px; height: 12px; display: inline-block; margin: -1px 10px;"></div> 500m
+		</div>
+		<div style="display:inline-block; padding:5px;">
+			<div class="beMarker" style="width: 20px; height: 20px; display: inline-block; margin: -4px 10px;"></div> 1500m
+		</div>
+		<div style="display:inline-block; padding:5px;">
+			<div class="beMarker" style="width: 28px; height: 28px; display: inline-block; margin: -8px 10px;"></div> 3000m
+		</div>
+	</div>
+
+	
+</div>

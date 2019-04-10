@@ -1,0 +1,116 @@
+
+<div class="container">
+    <!--  Begin Row  -->
+    <div class="row view-row">
+        <div class="col-md-4">
+            <div class="row">
+                <span class="input-title">
+                    1-Nuclide
+                </span>
+                <input type="radio" id="nucl1" ng-model="params.globalData.Nucl" ng-value="10">
+                <label for="nucl1"><sup>10</sup>Be</label>
+            </div>
+            <div class="row">
+                <input type="radio" id="nucl2" ng-model="params.globalData.Nucl" ng-value="3">
+                <label for="nucl2"><sup>3</sup>He</label>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <span class="input-title">
+                2-Scaling scheme
+            </span>
+            <div class="row">
+                <input type="radio" id="scaling2" ng-model="params.globalData.Scheme" ng-value="1">
+                <label for="scaling2">Lal-Stone time corrected <br> <small>(Lal, 1991; Stone, 2000; Nishiizumi et al., 1989; Balco et al., 2008)</small></label>
+            </div>
+            <div class="row">
+                <input type="radio" id="scaling1" ng-model="params.globalData.Scheme" ng-value="2">
+                <label for="scaling1">LSD <small>(Lifton et al., 2014)</small></label>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <span class="input-title">
+            3-Atmosphere model
+            </span>
+            <div class="row">
+                <input type="radio" id="atm1" ng-model="params.globalData.Atm" ng-value="0">
+                <label for="atm1">ERA40 <small>(Uppala et al., 2005)</small></label>
+            </div>
+            <div class="row">
+                <input type="radio" id="atm2" ng-model="params.globalData.Atm" ng-value="1">
+                <label for="atm2">Standard Atmosphere <small>(NOAA, 1976)</small></label>
+            </div>
+        </div>
+    </div>
+    <!-- End row -->
+
+    <!--  Begin Row  -->
+    <div class="row view-row">
+        <div class="col-md-3">
+            <div class="row">
+                <span class="input-title">
+                    4-Geomagnetic Database
+                </span>
+                <input type="radio" id="gmdb2" ng-change="loadGmdb(params
+        .globalData.GMDB)" ng-model="params.globalData.GMDB" ng-value="1">
+                <label for="gmdb2">Atmospĥeric <sup>10</sup>Be-based VDM </label>
+            </div>
+            <div class="row">
+                <span class="small">0-60 ka: Muscheler et al. (2005)</span><br>
+                <span class="small">60-2000 ka: SINT2000 (Valet et al., 2005)</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="row">
+                <input type="radio" id="gmdb1" ng-change="loadGmdb(params
+        .globalData.GMDB)" ng-model="params.globalData.GMDB" ng-value="3">
+                <label for="gmdb1">LSD Framework </label>
+            </div>
+            <div class="row">
+                <span class="small">Lifton et al., 2014</span>
+            </div>  
+        </div>
+        <div class="col-md-3">
+            <div class="row">
+                <input type="radio" id="gmdb3" ng-change="loadGmdb(params
+        .globalData.GMDB)" ng-model="params.globalData.GMDB" ng-value="2">
+                <label for="gmdb3">Lifton VDM 2016 </label>
+            </div>
+            <div class="row">
+                <span class="small">0-14 ka: Pavon-Carrasco et al. (2014)</span><br>
+                <span class="small">14-75 ka: GLOPIS-75 (Laj et al., 2004)</span><br>
+                <span class="small">75-2000 ka: PADM2M (Ziegler et al., 2011)</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="row">
+                <input type="radio" id="gmdb4" ng-model="customGdb" ng-value="true">
+                <label for="gmdb4">Browse your own data</label>
+                <div ng-show="customGdb" class="form-group">
+                    <input type="file" accept=".xls,.xlsx" name="gmdbFile" onchange="angular.element(this).scope().uploadGmdbFile(this.files)"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End row -->
+    <div class="row padding-20">
+        <div class="graph-container col-md-5">
+            <small class="gdb-x">Age (ka BP)</small>
+            <small class="vdm-y">VDM (10<sup>22</sup>  A.m&sup2;)</small>
+            <nvd3-line-chart class="gdb-graph" objectEquality="true" data="gdbData" id="gdbGraph" xAxisTickFormat="xAxisTickFormatFunction()" yAxisTickFormat="yAxisTickFormatFunction()" showXAxis="true" showYAxis="true">
+            <svg class="gdb-graph">
+            </svg>
+            </nvd3-line-chart>
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-default" ng-click="resetParams()">Reset</button>
+        </div>
+        <div class="col-md-3">
+            <button class="btn arrow_box" ng-click="go('samples')">Next</button>
+            
+        </div>
+    </div>
+
+</div>
+<!-- End of container -->
+

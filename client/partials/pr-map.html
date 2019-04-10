@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<h1>Production Rate calculation (Map Values)</h1>
+
+
+
+<div id="mapContainer" class="col-md-12">
+  <h2>Filter by Age</h2>
+  <p>Lower Value: {{min}}</p>
+  <p>Value 2: {{max}}</p>
+
+  <div range-slider
+  style="max-width: 80%;" 
+  floor="1"
+  ceiling="150"
+  dragstop="true"
+  ng-model-low="min"
+  ng-model-high="max">
+</div>
+<ui-gmap-google-map center='map.center' zoom='6'>
+<ui-gmap-marker ng-repeat="mark in markers |rangeFilter:min:max" coords='mark' idKey="$index" events='mapEvents' options="">
+</ui-gmap-marker>
+</ui-gmap-google-map>
+
+</div>
+
+<button ng-click="processWebPr()" class="btn btn-default"> Calculate Production Rate</button>
+<table ng-show="selectedMarkers" class="table table-condensed col-md-12" style="padding-top:5em;">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>latitude</th>
+      <th>longitude</th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    <button ng-click="resetMarkers()">Reset</button>
+    <tr ng-repeat="entry in selectedMarkers">
+      <th scope="row">{{entry.idKey}}</th>
+      <td>{{entry.latitude}}</td>
+      <td>{{entry.longitude}}</td>
+    </tr>
+  </tbody>
+</table>
+</html>

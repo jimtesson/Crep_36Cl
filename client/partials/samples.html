@@ -1,0 +1,83 @@
+<div class="">
+  <div class="jumbotron" collapse="!sampleHelp">
+      <h3>Samples file instructions</h3>
+      <ul>
+        <p>The input data file must be in the format of an Excel (c) spreadsheet (xls or xlsx). The spreadsheet must include the following data (Users may use the available spreadsheet called "Trial10BeData.xlsx" as a template):</p>
+        <li>
+        Column 1: Sample name
+        </li>
+        <li>
+        Column 2: Latitude (Decimal degrees). Range from -90 to 90°. Negative value for Southern Hemisphere.
+        </li>
+        <li>
+        Column 3: Longitude (Decimal degrees). Range from -180 to 180°. Negative value for Western Hemisphere.
+        </li>
+        <li>
+        Column 4: Altitude (masl)
+        </li>
+        <li>
+        Column 5: Cosmogenic nuclide concentration (at.g<sup>-1</sup>). IMPORTANT: For <sup>10</sup>Be, use the 07KNSTD standardization (Nishiizumi et al., 2007). If the <sup>10</sup>Be concentrations are computed using another standardization, convert them to 07KNSTD before loading your data in CREp (see <a href="http://hess.ess.washington.edu/math/docs/al_be_v22/al_be_docs.html">this link</a> for more details).
+        </li>
+        <li>
+        Column 6: Analytical 1-sigma uncertainty (at.g<sup>-1</sup>)
+        </li>
+        <li>
+        Column 7: Shielding correction (dimensionless). Range from 0 to 1.
+        </li>
+        <li>
+        Column 8: Sample density (g.cm<sup>-3</sup>).
+        </li>
+        <li>
+        Column 9: Sample thickness (cm).
+        </li>
+        <li>
+        Column 10: Erosion (cm.yr<sup>-1</sup>).
+        </li>
+      </ul>
+    </div>
+  <div class="row view-row">
+    <div class="col-md-12">
+      <span class="input-title">
+        Import your samples
+      </span>
+      <input  class="btn btn-default" id="ages-file-input" style="display: inline-block;"  type="file" accept=".xls,.xlsx" name="sampleFile" onchange="angular.element(this).scope().uploadSampleFile(this.files)"/>
+      <a  class="btn btn-default" style="display: inline-block;" href="sample-template.xlsx" download>Download Template (xlxs)</a>
+      <button ng-click="sampleHelp = !sampleHelp" style="display: inline-block;" class="btn btn-default" >Instructions for Sample File</button>  
+      <button  ng-show="sampleData" style="display: inline-block;"  ng-click="go('production-rate')" class="btn arrow_box ">Next</button>
+    </div>
+  </div>
+</div>
+<div ng-show="sampleData">
+  <table class="table table-condensed">
+    <thead>
+      <tr>
+        <th>Sample name</th>
+        <th>Latitude (deg)</th>
+        <th>Longitude (deg)</th>
+        <th>Altitude (masl)</th>
+        <th>Nuclide concentration (at/g)</th>
+        <th>1&#963</th>
+        <th>Shielding</th>
+        <th>Density (g/cm<sup>3</sup>)</th>
+        <th>Thickness (cm)</th>
+        <th>Erosion (cm/yr)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="entry in sampleData">
+        <th scope="row">{{entry.Sample}}</th>
+        <td>{{entry.Lat | number:5}}</td>
+        <td>{{entry.Lon | number:5}}</td>
+        <td>{{entry.Alt | number:2}}</td>
+        <td>{{entry.NuclCon | number:0}}</td>
+        <td>{{entry.NuclErr | number:0}}</td>
+        <td>{{entry.Shield | number:2}}</td>
+        <td>{{entry.Dens | number:2}}</td>
+        <td>{{entry.Thick | number:2}}</td>
+        <td>{{entry.Eros | number:5}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</div>

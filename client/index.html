@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html ng-cloak ng-app="app" ng-controller="mainController">
+<head>
+  <meta charset="UTF-8">
+  <title>Cosmic Ray Exposure Program</title>
+  <link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/css/bootstrap.css">
+  <link rel="stylesheet" type="text/css" href="styles/css/template.css">
+  <link rel="stylesheet" href="bower_components/nvd3/build/nv.d3.css">
+  <link rel="stylesheet" href="../maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+</head>
+<body>
+  <header id="header" class="col-md-12 header-image">
+    <!-- <div > -->
+    <div class="header-logo">
+      <a href="#/">
+       <img src="img/crep_logo.png">
+       
+     </a>
+   </div>
+   <div class="head-row row">
+     <span class="h2 header-link">
+      <a class="iced-link" href="http://calibration.ice-d.org/">
+        <table>
+          <tbody>
+            <td><span class="h1">ICE-D</span></td><td width="5"></td>     <td class="h5">PRODUCTION RATE<br>CALIBRATION DATA</td>
+          </tbody>
+        </table>
+      </a>
+    </span>
+    
+  </div>
+  <!-- </div> -->
+</header>
+
+<div class="container" id="main-container">
+  
+
+  <div id="view-container">
+    <div id="nav-row" class="row">
+      <nav class="top-nav">
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="navigation" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <li ui-sref="parameters" ui-sref-active="active"><a>1 Parameters</a></li>
+            <li ui-sref="samples" ui-sref-active="active"><a>2 Samples</a></li>
+            <li ui-sref="production-rate" ui-sref-active="active"><a>3 Production Rate</a></li>
+            <li ui-sref="calculation" ui-sref-active="active"><a>4 Results</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+	<!-- GOOGLE MAP VIEW -->
+    <ui-view class="container"> </ui-view>
+  </div>
+
+  <div class="footer container">
+    <div class="row">
+      <a href="http://www.cnrs.fr/" class="footer-logo">
+        <img src="img/logocnrs.png">
+      </a>
+      <a href="http://www.crpg.cnrs-nancy.fr/" class="footer-logo">
+        <img src="img/logocrpg.jpg">
+      </a>
+      <a href="http://www.univ-lorraine.fr/" class="footer-logo">
+        <img src="img/logouniv.png">
+      </a>
+      <a href="http://www.agence-nationale-recherche.fr/" class="footer-logo">
+        <img src="img/logo-anr.png">
+      </a>
+    </div>
+    <div class="row">
+      <span class="h5">Questions or bugs : <a href="mailto:blard@crpg.cnrs-nancy.fr">Pierre-Henri Blard</a></span>
+      <span class="h5">Or <a href="mailto:zakari@crpg.cnrs-nancy.fr">Mustapha Zakari</a></span>
+	  
+      <span>Or <a href="mailto:vivien@studio1d3p.fr">Vivien Laurent</a> (Web developer)</span>
+    </div>
+  </div>
+</div>
+<!-- 
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB09_5maABMAiugnVpuSnYhCA7T3VMNdNY">
+</script> -->
+<!-- <script src="bower_components/Chart.js/Chart.js"></script> -->
+<!-- <script src="bower_components/angular-chart.js/dist/angular-chart.js"></script> -->
+<!-- <script type="text/javascript" src="bower_components/angular-route/angular-route.js"></script> -->
+<script src="bower_components/d3/d3.js"></script>
+<script src="bower_components/nvd3/build/nv.d3.js"></script>
+
+<script type="text/javascript" src="bower_components/angular/angular.js"></script>
+<script src="bower_components/angularjs-nvd3-directives/dist/angularjs-nvd3-directives.js"></script>
+<script src="bower_components/angular-rangeslider-directive/angular-range-slider.min.js"></script>
+<link rel="stylesheet" href="bower_components/angular-rangeslider-directive/angular-range-slider.css">
+<script type="text/javascript" src="js/ui-bootstrap.js"></script>
+<script type="text/javascript" src="js/leaflet-pip.min.js"></script>
+<script type="text/javascript" src="bower_components/lodash/lodash.js"></script>
+<script type="text/javascript" src="bower_components/angular-google-maps/dist/angular-google-maps.js"></script>
+<script type="text/javascript" src="bower_components/zingchart/client/zingchart.min.js"></script>
+<script type="text/javascript" src="bower_components/ZingChart-AngularJS/src/zingchart-angularjs.js"></script>
+
+
+
+<script src="bower_components/leaflet/dist/leaflet.js"></script>
+<script src="bower_components/angular-simple-logger/dist/angular-simple-logger.js"></script>
+<script src="bower_components/ui-leaflet/dist/ui-leaflet.min.js"></script>
+<script src="bower_components/angular-ui-router/release/angular-ui-router.min.js"></script>
+<script src="bower_components/esri-leaflet/dist/esri-leaflet.js"></script>
+<link rel="stylesheet" href="bower_components/leaflet/dist/leaflet.css" />
+<link href='https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz' rel='stylesheet' type='text/css'>
+<script type="text/javascript" src="js/build.js"></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-17415174-4', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</body>
+</html>
