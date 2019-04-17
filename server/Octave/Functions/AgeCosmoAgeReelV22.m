@@ -31,15 +31,15 @@ function [AgeReel,ErrReel,ErrReel2,XPDFReel,PDFReel] = AgeCosmoAgeReelV22(AgeCos
 %
 % IMPORTANT : Requires Matlab 2009 or any more recent versions.
 
-% Code written by LCP Martin, PH Blard and J Lavé
-% Centre de Recherches Pétrographiques et Géochimiques (CRPG-CNRS), France
+% Code written by LCP Martin, PH Blard and J Lav?
+% Centre de Recherches P?trographiques et G?ochimiques (CRPG-CNRS), France
 % blard@crpg.cnrs-nancy.fr
 % Program desciprtion provided in Martin et al., (In Prep)
 %
 % This code contains portions of the code of N Lifton (Lifton et al., 2014,
 % under GNU licence)
 % 
-% Copyright 2015, CNRS-Université de Lorraine
+% Copyright 2015, CNRS-Universit? de Lorraine
 % All rights reserved
 %
 % This file is part of the CREp program.
@@ -73,9 +73,6 @@ if VecAgeReel1(end)>(AgeCosmo+10*ErrCosmo2); % Chope if too long
 end
 
 %--------Niishizumi et al.,(1989) correction------------------------------
-
-
-
 % Computation of cutoff rigidity Rc(t) (Dunai 2001, equation 1 and Lifton et al 2008):
 Rc = (PaleoVDM*1e22*4*1e-7*3*1e8)/(16*1e9*(6.3712*1e6)^2)*(cos(pi*Latitude/180))^4;
 

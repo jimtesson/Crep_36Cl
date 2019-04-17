@@ -16,8 +16,9 @@ function [Param_cosmo_out] = clrock(Data_in,Param_site_in,Const_cosmo,Sf)
 %            concentration 
 %
 % version 01/08/2018, written by TESSON J.
-[tmp N_samples] = size(Data_in);
-%N_samples = length(Z);
+[~,N_samples] = size(Data_in);
+
+Param_cosmo_out = cell(N_samples);
 
 %% LSD calculation (Sato/Heisinger)
 %  New Formulation uses Greg's Heisinger code to calculate the fluxes at 
@@ -47,49 +48,31 @@ for i=1:N_samples % loop over samples
     
     Data = Data_in{i};
     Param_site = Param_site_in{i};
-% Assign variables
-data_target = Data.target; % target chemistry
-uncert_target = Data.uncert_target; % uncertainties on target chemistry
-data_bulk = Data.bulk; % bulk chemistry
+    % Assign variables
+    data_target = Data.target; % target chemistry
+    uncert_target = Data.uncert_target; % uncertainties on target chemistry
+    data_bulk = Data.bulk; % bulk chemistry
 
-n = size(data_target,2) ;
-if n ~= 66, error('Sample file (target) must have 66 columns'), end
-n = size(data_bulk,2) ;
-if n ~= 66, error('Sample file (bulk) must have 66 columns'), end
+    n = size(data_target,2) ;
+    if n ~= 66, error('Sample file (target) must have 66 columns'), end
+    n = size(data_bulk,2) ;
+    if n ~= 66, error('Sample file (bulk) must have 66 columns'), end
 
-chimie_targ = data_target(1:n-4) ; 
-chimie_bulk = data_bulk(1:n-4) ;
+    chimie_targ = data_target(1:n-4) ; 
+    chimie_bulk = data_bulk(1:n-4) ;
 
-e = Param_site.mass_depth; % mass depth (g.cm-2)
-thickness = Param_site.thick; % thickness (cm)
-rho_rock = Param_site.rho_rock; % rock density ((g.cm-3)
-th2 = thickness * rho_rock/2 ; % mass thickness (g.cm-2)
+    e = Param_site.mass_depth; % mass depth (g.cm-2)
+    rho_rock = Param_site.rho_rock; % rock density ((g.cm-3)
 
-% Muons coefficients :
-so_e = 1.0;
-so_mu = 1.0 ;
-Lambda_e = Const_cosmo.Lambda_f_e ; % g.cm-2
-Lambda_mu = Const_cosmo.Lambda_mu ; % g.cm-2
+    % Muons coefficients :
+    Lambda_e = Const_cosmo.Lambda_f_e ; % g.cm-2
+    Lambda_mu = Const_cosmo.Lambda_mu ; % g.cm-2
 
-% scaling factor for nucleonic production as a function of elevation, latitude (and temporal variations)
-S_EL_f = Sf.SF_St_sp;
-S_EL_f_uncert = Sf.SF_St_sp_er;
-% scaling factor for muonic production as a function of elevation, latitude (and temporal variations)
-S_EL_mu = Sf.SF_St_mu;
-S_EL_mu_uncert = Sf.SF_St_mu_er;
+    % scaling factor for nucleonic production as a function of elevation, latitude (and temporal variations)
+    S_EL_f = Sf{i}.SF_St_sp;
 
-%correction factor for geometry effects on spallogenic production
-S_T = Sf.S_shape;
-S_T_uncert = Sf.S_shape_er;
-
-%correction factor for geometry effects on spallogenic production
-S_shape = Sf.S_shape;
-S_shape_uncert = Sf.S_shape_er;
-
-%correction factor for snow effects on spallogenic production
-S_snow = Sf.S_snow;
-S_snow_uncert = Sf.S_snow_er;
-
+    % scaling factor for muonic production as a function of elevation, latitude (and temporal variations)
+    S_EL_mu = Sf{i}.SF_St_mu;
 
 
 % CHEMICAL ELEMENTS
@@ -281,18 +264,13 @@ Psi_Cl36_Fe_0_uncert = Const_cosmo.Psi_Cl36_Fe_0_uncert; % Spallation production
 C_Ca = ppm_targ(62)*1e-6;  % Mass concentration of Ca (g of Ca per g of rock) % from ICP
 P_sp_Ca = Psi_Cl36_Ca_0*C_Ca;  % result unscaled 36Cl production by spallation of 40Ca (atoms 36Cl g-1 yr-1)
 
-Psi_Cl36_K_0 = 148.1 ;% 162 ; !!MODIF!! % Spallation production rate at surface of 39K
-% (at of Cl36 /g of K per yr) [162 ? 24 Evans et al. 1997]
 C_K = ppm_targ(51)*1e-6 ; % Mass concentration of K (g of K per g of rock)
 P_sp_K = Psi_Cl36_K_0*C_K ; % result unscaled 36Cl production by spallation of 39K (atoms 36Cl g-1 yr-1)
 
-Psi_Cl36_Ti_0 = 13 ; % Spallation production rate at surface of Ti
-% (at of Cl36 /g of Ti per yr) [13 ? 3 Fink et al. 2000]
 C_Ti = ppm_targ(52)*1e-6 ; % Mass concentration of Ti (g of Ti per g of rock)
 P_sp_Ti = Psi_Cl36_Ti_0*C_Ti ; % result unscaled 36Cl production by spallation of Ti (atoms 36Cl g-1 yr-1)
 
-Psi_Cl36_Fe_0 = 1.9 ; % Spallation production rate at surface of Fe
-% (at of Cl36 /g of Fe per yr) [1.9 ? 0.2 Stone 2005]
+
 C_Fe = ppm_targ(46)*1e-6 ; % Mass concentration of Fe (g of Fe per g of rock)
 P_sp_Fe = Psi_Cl36_Fe_0*C_Fe ; % result unscaled 36Cl production by spallation of Fe (atoms 36Cl g-1 yr-1)
 
@@ -312,25 +290,6 @@ P_sp = (P_sp_Ca + P_sp_K + P_sp_Ti + P_sp_Fe)*exp(-e/Lambda_e) ; % Unscaled Spal
     C_Fe_uncer = ppm_Fe2O3_uncer .* 1e-6;
     P_sp_Fe_uncert = ((Psi_Cl36_Fe_0.*C_Fe_uncer)^2+(C_Fe.*Psi_Cl36_Fe_0_uncert)^2)^.5;
 
-% % Uncertainties on P_sp_Ca
-% P_sp_Ca_uncert = ppm_CaO_uncer * 0.715*0.01 ; 
-% P_sp_Ca_uncert = ((4.8*C_Ca*exp(-e/Lambda_e))^2+(P_sp_Ca_uncert*Psi_Cl36_Ca_0*exp(-e/Lambda_e))^2)^0.5 ;
-% 
-% % Uncertainties on P_sp_K
-% P_sp_K_uncert = ppm_K2O_uncer*0.83*0.01 ; 
-% P_sp_K_uncert = ((7.8*C_K*exp(-e/Lambda_e))^2+(P_sp_K_uncert*Psi_Cl36_K_0*exp(-e/Lambda_e))^2)^0.5 ; %%%%%% !!!! to be checked on xcel %%%
-% 
-% % Uncertainties on P_sp_Ti
-% P_sp_Ti_uncert = ppm_TiO2_uncer * 0.6*0.01 ; 
-% P_sp_Ti_uncert = ((3*C_Ti*exp(-e/Lambda_e))^2+(P_sp_Ti_uncert*Psi_Cl36_Ti_0*exp(-e/Lambda_e))^2)^0.5 ;
-% 
-% 
-% % Uncertainties on P_sp_Fe
-% P_sp_Fe_uncert = ppm_Fe2O3_uncer * 0.699*0.01 ;
-% P_sp_Fe_uncert = ((0.2*C_Fe*exp(-e/Lambda_e))^2+(P_sp_Fe_uncert*Psi_Cl36_Fe_0*exp(-e/Lambda_e))^2)^0.5 ;
-% 
-% % Uncertainties on P_sp
-% P_sp_uncert = (P_sp_Ca + P_sp_K + P_sp_Ti + P_sp_Fe_uncert) .* (P_sp_Ca_uncert^2 + P_sp_K_uncert^2 + P_sp_Ti_uncert^2 + P_sp_Fe_uncert^2)^0.5;
 % -------------------- Direct capture of slow negative muons ---------------------
 % -------------------- by target elements Ca and K ------------------------------- 
 
@@ -362,7 +321,6 @@ Y_Sigma_K = f_c_K*f_i_K*f_d_K*f_n_K ; % 36Cl production per stopped muon
 Y_Sigma = Y_Sigma_Ca + Y_Sigma_K ;
 
 P_mu = Y_Sigma*Psi_mu_0*exp(-e/Lambda_mu);  % Unscaled slow negative muon production rate (atoms 36Cl g-1 yr-1)
-P_mu_uncert = 0.25 * P_mu ; %uncertainties on P_mu (atoms 36Cl g-1 yr-1)
 
 
 % ------------------------------------ Epithermal neutrons ------------------------------------ 
@@ -417,16 +375,14 @@ D_eth = 1/(3*Sigma_sc*(1 - 2/(3*A))) ; % (Eq 3.21, Gosse & Phillips, 2001)
 D_eth_a = 1/(3*Sigma_sc_a*(1 - 2/(3*A_a))) ; % (Eq 3.21, Gosse & Phillips, 2001)
 % Epithermal neutron diffusion coefficient in atmosphere (g.cm-2)
 
-P_f_0 = 696 ;%626 ; % !!MODIF!! Production rate of epithermal neutrons from fast neutrons in atm at land/atm interface (n cm-2 yr-1), Gosse & Philipps, 2001.
-P_f_0_uncert = 185;
+P_f_0 = Const_cosmo.P_f_0 ; % Production rate of epithermal neutrons from fast neutrons in atm at land/atm interface (n cm-2 yr-1), Gosse & Philipps, 2001.
+P_f_0_uncert = Const_cosmo.P_f_0_uncert;
+
 
 phi_star_eth = P_f_0*R_eth/(Sigma_eth - (D_eth/(Lambda_e^2))) ; % Epithermal neutron flux at land/atmosphere
-phi_star_eth_uncert = P_f_0_uncert * R_eth/(Sigma_eth - (D_eth/(Lambda_e^2))) ; % propagate p_f_0 uncertainties
-phi_star_eth_uncert = ( (R_eth/(Sigma_eth - (D_eth/(Lambda_e^2))).*P_f_0_uncert)^2 )^.5;
 % interface that would be observed in ss if interface was not present (n cm-2 yr-1)
 
 %Y_s = sum(f_d_k.*Y_n.*ppm_bulk(:,1:61).*N_k_bulk./A_k)/sum(ppm_bulk(:,1:61).*N_k_bulk./A_k) ;
-Y_s_k = f_c_k_bulk.*f_d_k.*Y_n;
 Y_s = sum(f_c_k_bulk.*f_d_k.*Y_n);
 % Average neutron yield per stopped negative muon
 % Y_s DEPENDS ON CHEMICAL COMPOSITION
@@ -436,18 +392,13 @@ D_th_a = 0.9260472 ; % Thermal neutron diffusion coeff in atm. (g*cm-2) - Consta
 Sigma_sc_a = 0.3773 ; % Macroscopic neutron scaterring cross section of atmosphere (cm2.g-1) - Constant (Chloe)
 
 phi_star_eth_a = P_f_0*R_eth_a/(Sigma_eth_a - (D_eth_a/(Lambda_e^2))) ; % Epithermal neutron flux at land/atmosphere interface that would be observed in atm 
-phi_star_eth_a_uncert = P_f_0_uncert * R_eth_a/(Sigma_eth_a - (D_eth_a/(Lambda_e^2))) ; % propagate p_f_0 uncertainties
 
 % if interface was not present (n cm-2 yr-1)
-phi_mu_f_0 = 7.9e+5 ; % Fast muon flux at land surface, sea level, high latitude, Gosse & Phillips, 2001 (? cm-2 yr-1)
+phi_mu_f_0 = Const_cosmo.phi_mu_f_0 ; % Fast muon flux at land surface, sea level, high latitude, Gosse & Phillips, 2001 (? cm-2 yr-1)
 P_n_mu_0 = (Y_s*Psi_mu_0 + 5.8e-6*phi_mu_f_0); % Fast muon flux at land surface SLHL, Eq.3.49 Gosse & Phillips, 2001 (n cm-2 yr-1)
 R_mu = S_EL_mu*P_n_mu_0/(S_EL_f*P_f_0*R_eth) ; %Ratio of muon production rate to epithermal neutron production rate
 
-R_mu_uncert = ((R_mu .* P_f_0_uncert ./ P_f_0)^2)^.5 ;
-
 Deltaphi_2star_eth_a = phi_star_eth - D_eth_a*phi_star_eth_a/D_eth ; % Adjusted difference between hypothetical equilibrium epithermal neutron fluxes in atm and ss (n cm-2 yr-1)
-
-Deltaphi_2star_eth_a_uncert = (phi_star_eth_uncert^2 + (D_eth_a/D_eth.*phi_star_eth_a_uncert)^2)^.5 ; % propagate p_f_0 uncertainties
 
 L_eth = 1/sqrt(3*Sigma_sc*Sigma_eth); % Epithermal neutron diffusion length (g cm-2)
 % L_eth DEPENDS ON CHEMICAL COMPOSITION
@@ -457,29 +408,13 @@ FDeltaphi_star_eth = ((D_eth_a/L_eth_a)*(phi_star_eth_a - phi_star_eth) - ...
     Deltaphi_2star_eth_a*(D_eth/Lambda_e))/...
     ((D_eth_a/L_eth_a) + (D_eth/L_eth)) ; % EQ. 3.28 Gosse & Phillips, 2001
 
-FDeltaphi_star_eth_uncert = ( ((D_eth_a/L_eth_a)/((D_eth_a/L_eth_a)+(D_eth/L_eth)).* phi_star_eth_uncert)^2 ...
-                                + ((D_eth_a/L_eth_a)/((D_eth_a/L_eth_a)+(D_eth/L_eth)).* phi_star_eth_a_uncert)^2 ...
-                                + ((D_eth/Lambda_e)/((D_eth_a/L_eth_a)+(D_eth/L_eth)).* Deltaphi_2star_eth_a_uncert)^2 ...
-                                            )^.5;
 % Difference between phi_star_eth,ss and actual epithermal neutron flux at land surface
 
 phi_eth_total = phi_star_eth*exp(-e/Lambda_e) + ...
     (1 + R_mu*R_eth)*FDeltaphi_star_eth*exp(-e/L_eth) + ...
     R_mu*phi_star_eth*exp(-e/Lambda_mu) ; % Epithermal neutron flux (concentration) (n cm-2 yr-1)
 
-phi_eth_total_uncert = ( ((exp(-e/Lambda_e)+R_mu*exp(-e/Lambda_mu)).*phi_star_eth_uncert)^2 ...
-                        + ((R_eth*FDeltaphi_star_eth*exp(-e/L_eth)+phi_star_eth*exp(-e/Lambda_mu)).*R_mu_uncert)^2 ...
-                        + (((1 + R_mu*R_eth)*exp(-e/L_eth)).*FDeltaphi_star_eth_uncert)^2 ...
-                                )^.5;
-
 P_eth = (f_eth/Lambda_eth)*phi_eth_total*(1 - p_E_th) ;
-P_eth_uncert = (( (f_eth/Lambda_eth)*(1 - p_E_th).*phi_eth_total_uncert )^2)^.5;
-
-A_eth = phi_star_eth ; A_eth = A_eth*(f_eth/Lambda_eth)*(1 - p_E_th) ;
-B_eth = (1 + R_mu*R_eth)*FDeltaphi_star_eth ; B_eth = B_eth*(f_eth/Lambda_eth)*(1 - p_E_th) ;
-C_eth = R_mu*phi_star_eth ; C_eth = C_eth*(f_eth/Lambda_eth)*(1 - p_E_th) ;
-
-%P_eth_uncert = 0.3 * P_eth ; %uncertainties on P_eth (atoms 36Cl g-1 yr-1)
 
 % ------------------------------------ Thermal neutrons ------------------------------------ 
 
@@ -497,70 +432,37 @@ Lambda_th = 1/Sigma_th ; % Eq 3.35 Gosse anf Phillips, 2001
 
 p_E_th_a = 0.56 ; % Resonance escape probability of the atmosphere - Constant (Chloe)
 R_th = p_E_th/p_E_th_a ; % Ratio of thermal neutron production in ss to that in atm ; Eq 3.34 Gosse and Phillips, 2001
-D_th = D_eth ; % D_th = 2.99
+DD_th = D_eth ; % D_th = 2.99
 R_th_a = 1 ;
 Deltaphi_star_eth_a = phi_star_eth - phi_star_eth_a ; % difference in equilibrium epithermal neutron fluxes between atm and ss
-
-Deltaphi_star_eth_a_uncert = ( (phi_star_eth_uncert)^2 + (phi_star_eth_a_uncert)^2)^.5;
 
 FDeltaphi_star_eth_a = (D_eth*Deltaphi_star_eth_a/L_eth - D_eth*Deltaphi_2star_eth_a/Lambda_e)/ ...
     (D_eth_a / L_eth_a + D_eth / L_eth );
 
-FDeltaphi_star_eth_a_uncert = ( ( (D_eth/L_eth)/(D_eth_a / L_eth_a + D_eth / L_eth ).*Deltaphi_star_eth_a_uncert )^2 ...
-                          + ((D_eth/Lambda_e)/(D_eth_a / L_eth_a + D_eth / L_eth ).*Deltaphi_2star_eth_a_uncert )^2 ...
-                                            )^.5;
-
 Sigma_th_a = 0.060241 ; % Constant from Chloe - macroscopic thermal neutron cross section of atm (cm2 g-1)
-phi_star_th = (p_E_th_a*R_th*phi_star_eth)/(Lambda_eth*(Sigma_th - D_th/(Lambda_e^2))) ;
-
-phi_star_th_uncert = ( ((p_E_th_a*R_th)/(Lambda_eth*(Sigma_th - D_th/(Lambda_e^2))).*phi_star_eth_uncert)^2)^.5;
+phi_star_th = (p_E_th_a*R_th*phi_star_eth)/(Lambda_eth*(Sigma_th - DD_th/(Lambda_e^2))) ;
 
 % thermal neutron flux at land/atm interface that would be observed in atm if interface not present (n.cm_2.a-1)
 R_prime_mu = (p_E_th_a/p_E_th)*R_mu ; % ratio of muon production rate to thermal neutron production rate
-R_prime_mu_uncert = ( ((p_E_th_a/p_E_th)*R_mu_uncert)^2)^.5;
 
-JDeltaphi_star_eth = (p_E_th_a*R_th*FDeltaphi_star_eth)/(Lambda_eth*(Sigma_th - D_th/(L_eth^2))) ; % Eq. 3.39 Gosse & Phillips, 2001
-JDeltaphi_star_eth_uncert = ( ( (p_E_th_a*R_th)/(Lambda_eth*(Sigma_th - D_th/(L_eth^2))) .* FDeltaphi_star_eth_uncert )^2 )^.5;
+JDeltaphi_star_eth = (p_E_th_a*R_th*FDeltaphi_star_eth)/(Lambda_eth*(Sigma_th - DD_th/(L_eth^2))) ; % Eq. 3.39 Gosse & Phillips, 2001
 
 % Portion of difference between phi_star_eth,ss and actual flux due to epithermal flux profile
 JDeltaphi_star_eth_a = (p_E_th_a*R_th_a*FDeltaphi_star_eth_a)/((1/Sigma_eth_a)*(Sigma_th_a - D_th_a/(L_eth_a^2))) ;
-JDeltaphi_star_eth_a_uncert = ( ((p_E_th_a*R_th_a)/((1/Sigma_eth_a)*(Sigma_th_a - D_th_a/(L_eth_a^2))).*FDeltaphi_star_eth_a_uncert)^2 )^.5;
+
 % Portion of difference between pi_star_eth,a and actual flux due to epithermal flux profile
 
-L_th = sqrt(D_th/Sigma_th) ;
+L_th = sqrt(DD_th/Sigma_th) ;
 L_th_a = sqrt(D_th_a/Sigma_th_a) ; % thermal neutron diffusion length in atm (g cm-2)
 phi_star_th_a = (p_E_th_a*R_th_a*phi_star_eth_a)/(1/Sigma_eth_a*(Sigma_th_a - D_th_a/(Lambda_e^2))) ; 
-
-phi_star_th_a_uncert =  ( (phi_star_eth_a_uncert.*(p_E_th_a*R_th_a)/(1/Sigma_eth_a*(Sigma_th_a - D_th_a/(Lambda_e^2))))^2)^.5;
 
 % thermal neutron flux at land/atmosphere interface that would be observed in atm if interface was not present (n cm-2 yr-1)
 Deltaphi_star_th = phi_star_th_a - phi_star_th ; % difference between hypothetical equilibrium thermal neutron fluxes in atmosphere and ss
 
-Deltaphi_star_th_uncert = ( (phi_star_th_a_uncert)^2 + (phi_star_th_uncert)^2)^.5;
-
 JDeltaphi_star_th = (D_th_a*(phi_star_th_a/Lambda_e - JDeltaphi_star_eth_a/L_eth_a) ...
-   - D_th*(phi_star_th/Lambda_e + JDeltaphi_star_eth/L_eth) ...
+   - DD_th*(phi_star_th/Lambda_e + JDeltaphi_star_eth/L_eth) ...
    + (D_th_a/L_th_a)*(Deltaphi_star_th + JDeltaphi_star_eth_a - JDeltaphi_star_eth)) ...
-   / ((D_th/L_th) + (D_th_a/L_th_a)) ; % portion of difference between phi_star_th,ss and actual flux due to thermal flux profile
-
-AAA = ((D_th/L_th) + (D_th_a/L_th_a)) ;
-JDeltaphi_star_th = D_th_a/Lambda_e/ AAA *phi_star_th_a...
-                    + ((D_th_a/L_th_a)- (D_th_a/L_eth_a))/ AAA *JDeltaphi_star_eth_a...
-                    + (D_th_a/L_th_a)/ AAA *Deltaphi_star_th...
-                    - D_th/Lambda_e/ AAA *phi_star_th...
-                    - (D_th /L_eth+D_th_a/L_th_a) / AAA * JDeltaphi_star_eth 
-
-JDeltaphi_star_th_uncert = ( (D_th_a/Lambda_e/ AAA *phi_star_th_a_uncert)^2 ...
-                            + (((D_th_a/L_th_a)- (D_th_a/L_eth_a))/ AAA *JDeltaphi_star_eth_a_uncert)^2 ...
-                            + ((D_th_a/L_th_a)/ AAA *Deltaphi_star_th_uncert)^2 ...
-                            + (D_th/Lambda_e/ AAA *phi_star_th_uncert)^2 ...
-                            + (  (D_th /L_eth+D_th_a/L_th_a) / AAA * JDeltaphi_star_eth_uncert )^2 ...
-                                        )^.5;
-
-phi_th_total = phi_star_th*exp(-e/Lambda_e) + ...
-    (1 + R_prime_mu)*JDeltaphi_star_eth*exp(-e/L_eth) + ...
-    (1 + R_prime_mu*R_th)*JDeltaphi_star_th*exp(-e/L_th) + ...
-    R_prime_mu*phi_star_th*exp(-e/Lambda_mu) ; % Thermal neutron flux (n.cm_2.a-1)
+   / ((DD_th/L_th) + (D_th_a/L_th_a)) ; % portion of difference between phi_star_th,ss and actual flux due to thermal flux profile
 
 phi_th_total = phi_star_th *exp(-e/Lambda_e) + ...
                 + JDeltaphi_star_eth *exp(-e/L_eth) ...
@@ -569,31 +471,9 @@ phi_th_total = phi_star_th *exp(-e/Lambda_e) + ...
                 + R_prime_mu*R_th*JDeltaphi_star_th*exp(-e/L_th)... 
                 + phi_star_th*R_prime_mu*exp(-e/Lambda_mu) ; % Thermal neutron flux (n.cm_2.a-1)
 
-phi_th_total_uncert = ( (phi_star_th_uncert*(exp(-e/Lambda_e)+R_prime_mu*exp(-e/Lambda_mu)))^2 ...
-                        +(JDeltaphi_star_eth_uncert*(exp(-e/L_eth)+R_prime_mu*exp(-e/L_eth)))^2 ...
-                        +(JDeltaphi_star_th_uncert*(exp(-e/L_th)+R_prime_mu*R_th*exp(-e/L_th)))^2 ...
-                        +(R_prime_mu_uncert*(JDeltaphi_star_eth*exp(-e/L_eth)+R_th*JDeltaphi_star_th*exp(-e/L_th)+phi_star_th*exp(-e/Lambda_mu)))^2 ...
-                                )^.5;
-
-% 
-% phi_th_total_uncert = (  ((exp(-e/Lambda_e)+R_prime_mu*exp(-e/Lambda_mu)).*phi_star_th_uncert)^2 ...
-%                 + ((JDeltaphi_star_eth*exp(-e/L_eth) ...
-%                     + R_th*JDeltaphi_star_th*exp(-e/L_th)...
-%                     + phi_star_th*exp(-e/Lambda_mu)).*R_prime_mu_uncert)^2 ...
-%                 + (((1 + R_prime_mu)*exp(-e/L_eth)).*JDeltaphi_star_eth_uncert)^2 ...
-%                 + (((1 + R_prime_mu*R_th)*exp(-e/L_th))*JDeltaphi_star_th_uncert)^2 ...
-%                             )^.5;
 
 P_th = (f_th/Lambda_th)*phi_th_total ; % Result unscaled sample specific 36Cl production rate by capture of thermal neutrons (atoms 36Cl g-1 yr-1)
 
-P_th_uncert = ( ((f_th/Lambda_th)*phi_th_total_uncert)^2 )^.5; 
-
-A_th = phi_star_th ; A_th = A_th*(f_th/Lambda_th) ;
-B_th = (1 + R_prime_mu)*JDeltaphi_star_eth ; B_th = B_th*(f_th/Lambda_th) ;
-C_th = (1 + R_prime_mu*R_th)*JDeltaphi_star_th ; C_th = C_th*(f_th/Lambda_th) ;
-D_th = R_prime_mu*phi_star_th ; D_th = D_th*(f_th/Lambda_th) ;
-
-%P_th_uncert = 0.3 * P_th ; %uncertainties on P_th (atoms 36Cl g-1 yr-1)
 
 % ------------------------------------ Radiogenic production -----------------------------------------
 
@@ -610,117 +490,36 @@ P_n_alphan = X*U + Y*Th ; % alpha,n reactions
 P_n_sf = 0.429*U ; % spontaneous fission
 P_th_r = (P_n_alphan + P_n_sf)*p_E_th ; % total radiogenic thermal neutron production
 P_eth_r = (P_n_alphan + P_n_sf)*(1 - p_E_th) ; % total radiogenic epithermal neutron production
+
 P_rad = P_th_r*f_th + P_eth_r*f_eth ;
 
-P_rad_uncert = 0.05 * P_rad ; %uncertainties on P_eth (atoms 36Cl g-1 yr-1)
 
-%% ------------------------------------ Sample thickness factors -----------------------------------------
-%           Sample thickness factors as a function of sample position along direction e.
-% For spallation
-Q_sp = 1 + (th2^2/(6*(Lambda_e^2)));
-Q_sp_uncert = 0.02 * Q_sp ; % uncertainties on Q_sp
-%
-
-% For epithermal neutrons
-A_eth_corr = 1 + ((th2/Lambda_e)^2)/6 ;
-B_eth_corr = 1 + ((th2/L_eth)^2)/6 ;
-C_eth_corr = 1 + ((th2/Lambda_mu)^2)/6 ;
-
-Q_eth = A_eth*exp(-e/Lambda_e)*A_eth_corr + ...
-        B_eth*exp(-e/L_eth)*B_eth_corr + ...
-        C_eth*exp(-e/Lambda_mu)*C_eth_corr ;
-Q_eth = Q_eth/P_eth ;
-Q_eth_uncert = 0.02 * Q_eth ;% uncertainties on Q_eth
-
-% For thermal neutrons
-A_th_corr = 1 + ((th2/Lambda_e)^2)/6 ;
-B_th_corr = 1 + ((th2/L_eth)^2)/6 ;
-C_th_corr = 1 + ((th2/L_th)^2)/6 ;
-D_th_corr = 1 + ((th2/Lambda_mu)^2)/6 ;
-
-Q_th = A_th*exp(-e/Lambda_e)*A_th_corr + ...
-       B_th*exp(-e/L_eth)*B_th_corr + ...
-       C_th*exp(-e/L_th)*C_th_corr + ...
-       D_th*exp(-e/Lambda_mu)*D_th_corr ;
-Q_th = Q_th/P_th ;
-
-Q_th_uncert = 0.02 * Q_th ;% uncertainties on Q_th
-
-% For muons
-Q_mu = 1 + (th2^2/(6*(Lambda_mu^2))) ;
-
-Q_mu_uncert = 0.02 * Q_mu ;% uncertainties on Q_th
 % Shielding factors
 
 S_L_th = 1 ; % diffusion out of objects (poorly constrained)
 S_L_eth = 1 ; % diffusion out of objects (poorly constrained)
 
-%% Depth reference factors
-Df_s = exp(-e./Lambda_e);
-Df_th = exp(-e./L_th);
-Df_eth = exp(-e./L_eth);
-Df_mu = exp(-e./Lambda_mu);
-
-%% production rate coefficient 
-
-J_s = S_shape*S_snow*(Psi_Cl36_Ca_0*C_Ca+C_K*Psi_Cl36_K_0+C_Ti*Psi_Cl36_Ti_0+C_Fe*Psi_Cl36_Fe_0)+(1-p_E_th)*f_eth/Lambda_eth*phi_star_eth+f_th/Lambda_th*phi_star_th;
-J_eth = FDeltaphi_star_eth*(1-p_E_th)*f_eth/Lambda_eth*(1+R_mu*R_eth)+JDeltaphi_star_eth*f_th/Lambda_th*(1+R_prime_mu);
-J_th = (1+R_prime_mu*R_th)*JDeltaphi_star_th*f_th/Lambda_th;
-J_mu = R_mu*(1-p_E_th)*f_eth/Lambda_eth*phi_star_eth+R_prime_mu*f_th/Lambda_th*phi_star_th+S_EL_mu/S_EL_f*Y_Sigma*Psi_mu_0;
-
-%% production rate coefficient corrected for sample thickness for spallogenic reaction
-
-JQ_s = Q_sp * S_shape *S_snow*(Psi_Cl36_Ca_0*C_Ca+C_K*Psi_Cl36_K_0+C_Ti*Psi_Cl36_Ti_0+C_Fe*Psi_Cl36_Fe_0)+ Q_eth*(1-p_E_th)*f_eth/Lambda_eth*phi_star_eth + Q_th*f_th/Lambda_th*phi_star_th;
-JQ_eth = Q_eth*FDeltaphi_star_eth*(1-p_E_th)*f_eth/Lambda_eth*(1+R_mu*R_eth)+Q_th*JDeltaphi_star_eth*f_th/Lambda_th*(1+R_prime_mu);
-JQ_th = Q_th * (1+R_prime_mu*R_th)*JDeltaphi_star_th*f_th/Lambda_th;
-JQ_mu = Q_eth * R_mu*(1-p_E_th)*f_eth/Lambda_eth*phi_star_eth + Q_th*R_prime_mu*f_th/Lambda_th*phi_star_th + Q_mu*S_EL_mu/S_EL_f*Y_Sigma*Psi_mu_0;
 
 %% TOTAL PRODUCTION RATE at surface
 
 % Cosmogenic production:
-P_cosmo = so_e*S_EL_f*(Q_sp.*P_sp + S_L_th*Q_th*P_th + S_L_eth*Q_eth*P_eth) + so_mu*S_EL_mu*Q_mu.*P_mu ;
+%P_cosmo = so_e*S_EL_f*(Q_sp.*P_sp + S_L_th*Q_th*P_th + S_L_eth*Q_eth*P_eth) + so_mu*S_EL_mu*Q_mu.*P_mu ;
+P_cosmo = S_EL_f*(P_sp + S_L_th*P_th + S_L_eth*P_eth) + S_EL_mu*P_mu ;
 
 %%% scaled sources of production %%%
 P = P_cosmo+P_rad;
 
-P_uncert = ( (S_EL_f_uncert*S_T*(Q_sp*S_shape*S_snow*(P_sp_Fe*exp(-e/Lambda_e)+P_sp_Ti*exp(-e/Lambda_e)+P_sp_K*exp(-e/Lambda_e)+P_sp_Ca*exp(-e/Lambda_e))+Q_th*P_th+Q_eth*P_eth))^2 ...
-        + (S_EL_f*S_T_uncert*(Q_sp*S_shape*S_snow*(P_sp_Fe*exp(-e/Lambda_e)+P_sp_Ti*exp(-e/Lambda_e)+P_sp_K*exp(-e/Lambda_e)+P_sp_Ca*exp(-e/Lambda_e))+Q_th*P_th+Q_eth*P_eth))^2 ...
-        + (Q_sp_uncert*S_EL_f*S_T*S_shape*S_snow*(P_sp_Fe*exp(-e/Lambda_e)+P_sp_Ti*exp(-e/Lambda_e)+P_sp_K*exp(-e/Lambda_e)+P_sp_Ca*exp(-e/Lambda_e)))^2 ...
-        + (S_EL_f*S_T*S_shape_uncert*S_snow*Q_sp*(P_sp_Fe*exp(-e/Lambda_e)+P_sp_Ti*exp(-e/Lambda_e)+P_sp_K*exp(-e/Lambda_e)+P_sp_Ca*exp(-e/Lambda_e)))^2 ...
-        + (S_EL_f*S_T*S_shape*S_snow_uncert*Q_sp*(P_sp_Fe*exp(-e/Lambda_e)+P_sp_Ti*exp(-e/Lambda_e)+P_sp_K*exp(-e/Lambda_e)+P_sp_Ca*exp(-e/Lambda_e)))^2 ...
-        + (S_EL_f*S_T*S_shape*S_snow*Q_sp*P_sp_Fe_uncert)^2 ...
-        + (S_EL_f*S_T*S_shape*S_snow*Q_sp*P_sp_Ti_uncert)^2 ...
-        + (S_EL_f*S_T*S_shape*S_snow*Q_sp*P_sp_K_uncert)^2 ...
-        + (S_EL_f*S_T*S_shape*S_snow*Q_sp*P_sp_Ca_uncert)^2 ...
-        + (Q_th_uncert*S_EL_f*S_T*P_th)^2 ...
-        + (Q_th*S_EL_f*S_T*P_th_uncert)^2 ...
-        + (Q_eth_uncert*S_EL_f*S_T*P_eth)^2 ...
-        + (Q_eth*S_EL_f*S_T*P_eth_uncert)^2 ...
-        + (S_EL_mu_uncert*S_T*Q_mu*P_mu)^2 ...
-        + (S_EL_mu*S_T_uncert*Q_mu*P_mu)^2 ...
-        +(S_EL_mu*S_T*Q_mu_uncert*P_mu)^2 ...
-        + (S_EL_mu*S_T*Q_mu*P_mu_uncert)^2 )^0.5;
-
-
-%% time factors for radiogenic contribution
-% radiogenic 36Cl
-Param_cosmo.t_rad = (1-exp(-Const_cosmo.lambda36*Param_site.t_form))/Const_cosmo.lambda36; %time factor for radiogenic
-Param_cosmo.t_rad_uncert = ((Const_cosmo.lambda36_uncert*((-Param_site.t_form*(-exp(-Const_cosmo.lambda36*Param_site.t_form)) ...
-                            *Const_cosmo.lambda36)-(1-exp(-Const_cosmo.lambda36*Param_site.t_form)))/Const_cosmo.lambda36^2)^2 ...
-                            +(Param_site.t_form_uncert*(exp(-Const_cosmo.lambda36*Param_site.t_form)))^2)^.5;
-Param_cosmo.N36Cl.rad = P_rad * Param_cosmo.t_rad; 
-Param_cosmo.N36Cl.rad_uncert = ((P_rad_uncert*Param_cosmo.t_rad)^2+(Param_cosmo.t_rad_uncert*P_rad)^2)^.5;
-
-% inherited 36Cl
+%% Inherited 36Cl
 Param_cosmo.N36Cl.inh = Data.N36Cl.inh_0 * exp(-Const_cosmo.lambda36*Param_site.t_expo_estim); 
 
-%% LSD calculation (Sato/Heisinger)
+%% Muon calculation (Sato/Heisinger)
 %  New Formulation uses Greg's Heisinger code to calculate the fluxes at 
 % a vector of depths to create a table that can be referred to later
 
 %store the output fluxes that we need
 Param_cosmo.negflux=flux_muon.R;
 Param_cosmo.totalflux=flux_muon.phi;
+
 %Also store the muons production rates from the code
 Param_cosmo.muon36(1,:)=depthvector;
 Param_cosmo.depthvector=depthvector;
@@ -763,35 +562,28 @@ Param_cosmo.P_sp_Ti = P_sp_Ti;
 Param_cosmo.P_sp_Fe = P_sp_Fe;
 
 Param_cosmo.P_cosmo = P_cosmo;
+Param_cosmo.P = P;
+Param_cosmo.P_sp = P_sp;
 Param_cosmo.P_rad = P_rad;
-Param_cosmo.P_rad_uncert = P_rad_uncert;
-Param_cosmo.P_uncert = P_uncert;
+Param_cosmo.P_th = P_th;
+Param_cosmo.P_eth = P_eth;
+Param_cosmo.P_mu = P_mu;
 
 Param_cosmo.L_eth = L_eth; % thermal neutron diffusion length in subsurface
 Param_cosmo.L_th = L_th; % epithermal neutron diffusion length in subsurface
 Param_cosmo.L_sp = Lambda_e; % effective fast neutron attenuation coefficient
 Param_cosmo.L_mu = Lambda_mu; % slow muon attenuation length
 
-Param_cosmo.Df_s = Df_s;
-Param_cosmo.Df_th = Df_th;
-Param_cosmo.Df_eth = Df_eth;
-Param_cosmo.Df_mu = Df_mu;
-
-Param_cosmo.Q_sp = Q_sp;
-Param_cosmo.Q_th = Q_th;
-Param_cosmo.Q_eth = Q_eth;
-Param_cosmo.Q_mu = Q_mu;
-
-Param_cosmo.JQ_s = JQ_s;
-Param_cosmo.JQ_th = JQ_th;
-Param_cosmo.JQ_eth = JQ_eth;
-Param_cosmo.JQ_mu = JQ_mu;
-
 Param_cosmo.C_Ca = C_Ca;
 Param_cosmo.C_K = C_K;
 Param_cosmo.C_Ti = C_Ti;
 Param_cosmo.C_Fe = C_Fe;
 
+Param_cosmo.A_k = A_k;
+Param_cosmo.I_eff = I_eff;
+Param_cosmo.I_a_k = I_a_k;
+Param_cosmo.sigma_th_k = sigma_th_k;
+Param_cosmo.Sigma_th = Sigma_th;
 Param_cosmo.p_E_th = p_E_th;
 Param_cosmo.f_eth = f_eth;
 Param_cosmo.Lambda_eth = Lambda_eth;
@@ -808,20 +600,34 @@ Param_cosmo.JDeltaphi_star_th = JDeltaphi_star_th;
 Param_cosmo.R_prime_mu = R_prime_mu;
 Param_cosmo.Y_Sigma = Y_Sigma;
 Param_cosmo.P_f_0 = P_f_0;
+Param_cosmo.P_f_0_uncert = P_f_0_uncert;
 Param_cosmo.p_E_th_a = p_E_th_a;
-
-Param_cosmo.P_th = P_th;
-Param_cosmo.P_eth = P_eth;
-Param_cosmo.P_mu = P_mu;
-
+Param_cosmo.P_th_r = P_th_r ;
+Param_cosmo.P_eth_r = P_eth_r;
+Param_cosmo.Y_s = Y_s;
+Param_cosmo.Sigma_eth = Sigma_eth;
+Param_cosmo.D_eth = D_eth;
+Param_cosmo.Sigma_eth_a = Sigma_eth_a;
+Param_cosmo.D_eth_a = D_eth_a;
+Param_cosmo.R_eth_a = R_eth_a;
+Param_cosmo.D_eth_a = D_eth_a;
+Param_cosmo.L_eth_a = L_eth_a;
+Param_cosmo.Sigma_th = Sigma_th;
+Param_cosmo.DD_th = DD_th;
+Param_cosmo.R_th_a = R_th_a;
+Param_cosmo.Sigma_th_a = Sigma_th_a;
+Param_cosmo.D_th_a = D_th_a;
+Param_cosmo.L_th_a = L_th_a;
 
 Param_cosmo.ppm_targ = ppm_targ;
 Param_cosmo.ppm_bulk = ppm_bulk;
 
-Param_cosmo.J_s = J_s;
-Param_cosmo.J_eth = J_eth;
-Param_cosmo.J_th = J_th;
-Param_cosmo.J_mu = J_mu;
+
+% uncertainties
+Param_cosmo.uncert.P_sp_Ca_uncert = P_sp_Ca_uncert;
+Param_cosmo.uncert.P_sp_Fe_uncert = P_sp_Fe_uncert;
+Param_cosmo.uncert.P_sp_Ti_uncert = P_sp_Ti_uncert;
+Param_cosmo.uncert.P_sp_K_uncert = P_sp_K_uncert;
 
 Param_cosmo_out{i} = Param_cosmo;
 end

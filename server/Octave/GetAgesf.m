@@ -21,6 +21,7 @@ name=strrep(name,'\\','/'); %MATLAB !!!!!
 % test the structure
 %if(isfield(Data,'Name')==0); Data = Data{1,1}; end;
 load Data_36;
+%load Data_be;
 %load data_fault_1s;
 % Load the parameters
 Nucl=Data.Nucl;
@@ -34,13 +35,16 @@ else
     ERA40lat=[];
     ERA40lon=[];
 end
+
+
 if length(Data.GMDB)==1;
-    NumGMDB=Data.GMDB;
+    %NumGMDB=Data.GMDB;
+    NumGMDB = 2; % 1: Mush; 2: GLOPIS; 3: LSD; 4: own user geomagnetic db
     if NumGMDB==1;
         SelGMDB=GMDB.Musch;
     elseif NumGMDB==2;
         SelGMDB=GMDB.GLOPIS;
-    else
+    else %  (NumGMDB=3)
         SelGMDB=GMDB.LSD;
     end
 else
@@ -85,7 +89,28 @@ StatCell=cell(NbSpl,1);
 if Nucl==36
     addpath(genpath('Functions/36Cl_Functions'));
     
-    % to be given by the user: !!!!
+   % Model used for the modeling of 36Cl concentrations
+   
+     Scheme=1; % scaling model (1: LAL-STONE, 2: LSD)
+     Muon_model = 2; % 1: Exponential, 2: numeric integration of the flux (Balco 2008)
+            % Muon
+            if(Muon_model == 1)
+                flag.muon = 'exp';  % Muon attenuation length approximated by exponential (Schimmelfenning 2009).  
+           elseif(Muon_model == 2)
+                flag.muon = 'num'; % Muon attenuation length calculated following Heisinger (2002a,b) and Balco et al. (2008)
+            else
+                Mess=sprintf('Invlid muon model');
+            end
+            % Scaling model
+            if(Scheme == 1)
+                flag.scaling_model = 'st'; % LAL-STONE scheme
+            elseif(Scheme == 2)
+                flag.scaling_model = 'sa'; % LSD scheme  
+            else
+                Mess=sprintf('Invlid scaling model');
+            end  
+            
+    % !!!!!!!!!!!!!!!!! to be given by the user: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         % Constants
         Data.lambda36 = 2.303e-6 ;
         Data.lambda36_uncert = Data.lambda36 .* 0.0066;
@@ -108,41 +133,23 @@ if Nucl==36
 
     
     % Variable and Data Initialization 
-    [Data_formatted,Param_site,Const_cosmo] = Init_var(Data);
+    [Data_formatted,Param_site,Const_cosmo] = Init_var(Data,flag);
 
     % Scaling factors initialization
     %w = 0.2; % water content for Sato & Niita (2006)
     w = -1; % water content =  default value
-    
-    NumGMDB = 3; % 1: Mush; 2: GLOPIS; 3: LSD
-    if NumGMDB==3
-        Sf = Func_Sf(Param_site{1},Atm,w,NumGMDB);
-    else
-        Sf = Func_Sf(Param_site{1},Atm,w,SelGMDB);
-    end
-    % Correction factors
-    Sf.S_T = Data.Shield(1); % correction factor for shielding of a sample of arbitrary orientation by surrounding topography
-    Sf.S_T_er = 0.01*Data.Shield(1); % uncertainties
-    Sf.S_snow = 1; % correction factor for snow shielding for spallogenic production
-    Sf.S_snow_er = 0.01; % uncertainties
-    Sf.S_shape = 1; % correction factor for geometry effects on spallogenic production
-    Sf.S_shape_er = 0.03; % uncertainties
+            
+    % geomagnetic database
+    flag.NumGMDB = NumGMDB;
+    Sf = Func_Sf(Param_site,Data,Atm,w,SelGMDB,flag);
     
     % Production rates and constants initialization
     Param_cosmo = clrock(Data_formatted,Param_site,Const_cosmo,Sf);
     
-    %% Lets calculate ages
-    Scheme=2;
-    Muon_model = 2;
-    Scaling_model = 1;
+    [check36] = sanity_check_36Cl(Param_cosmo,Sf);
     
-
-    if(Scheme==1 && Data.Eros == 0 && NbSpl == 1)
-        %% Exposure age of the sample (only for uneroded surface) using the Schimmelfenning 2009 model
-        t = -log(1-(Data.NuclCon(1)-Param_cosmo{1}.N36Cl.rad-Param_cosmo{1}.N36Cl.inh)*Const_cosmo.lambda36/Param_cosmo{1}.P_cosmo)/Const_cosmo.lambda36
-    end
-    if(Scheme~=1 || Data.Eros ~= 0) % case 
-        
+    %% Lets calculate ages
+    for is=1:NbSpl
         % Create de dataset
         dataset(1,:) = Data.NuclCon(:);
         dataset(2,:) = Data.NuclErr(:);
@@ -154,48 +161,36 @@ if Nucl==36
         % Search parameters
         flag.min_bounds = 0.0; % minimum bound for the search
         flag.max_bounds = 400000; % maximum bound for the search
-        %flag.search = 'fminsearch'; %
-        flag.search = 'nmsmax';
+        flag.search = 'fminsearch'; %flag.search = 'nmsmax';
                  
         % First guess considering the sample belongs to a surface without erosion.
-        t_guess = -log(1-(Data.NuclCon(1)-Param_cosmo{1}.N36Cl.rad-Param_cosmo{1}.N36Cl.inh)*Const_cosmo.lambda36/Param_cosmo{1}.P_cosmo)/Const_cosmo.lambda36
+        %t_guess = -log(1-(Data.NuclCon(is)-Param_cosmo{is}.N36Cl.rad-Param_cosmo{is}.N36Cl.inh)*Const_cosmo.lambda36/Param_cosmo{is}.P_cosmo(1))/Const_cosmo.lambda36;
+        t_guess = -log(1-(Data.NuclCon(is))*Const_cosmo.lambda36/Param_cosmo{is}.P_cosmo(1))/Const_cosmo.lambda36;
+
         %t_guess = 10000;randi([flag.min_bounds flag.max_bounds],1,1);
-        
-        % Model used for the modeling of 36Cl concentrations
-            if(Muon_model == 1)
-                flag.model = 'exp';  % Muon attenuation length approximated by exponential (Schimmelfenning 2009).  
-                flag.scaling_model = 'st'; % Scaling factors following Lal Stone 2000 scheme.
-            else
-                flag.model = 'num'; % Muon attenuation length calculated following Heisinger (2002a,b) and Balco et al. (2008)
-            end
-            
-            if(Scaling_model == 1)
-                flag.scaling_model = 'st'; % LAL-STONE scheme
-            else
-                flag.scaling_model = 'sa'; % LSD scheme  
-            end
-            
+
             n_trial = 200;
             % preparing dataset integrating data uncertainty
-            for i=1:n_trial
+            for k=1:n_trial
                 for j=1:length(NbSpl)                    
                     dataset(1,j) = Data.NuclCon(j) + Data.NuclErr(j)*randn(1);
                 end
-                d{i} = dataset;
+                d{k} = dataset;
             end
             % anonymous function
-            func = @(i) Find_age(Const_cosmo, Param_cosmo, Param_site, Sf, d{i}, erosion, t_guess, flag);
-
+            func = @(ik) Find_age(Const_cosmo, Param_cosmo, Param_site, Sf{is}, d{ik}, erosion, t_guess, flag);
             age = zeros(1,n_trial);
             
-            resolution = 'serial'
+            resolution = 'parallel'
             % serial resolution
             if(strcmp(resolution,'serial')==1)
-                for i=1:n_trial
+                for k=1:n_trial
                     %Best_age = Find_age(Const_cosmo, Param_cosmo, Param_site, Sf, dataset, erosion, t_guess, flag);
-                    age(i) = func(i);
-                    t_guess = age(i); % starting age for the next search
+                    age(k) = func(k);
+                    t_guess = age(k); % starting age for the next search
+                    h = waitbar(k/n_trial)
                 end
+                    close(h)
             elseif(strcmp(resolution,'parallel')==1)
             % parallel resolution
             age = [];           
@@ -205,158 +200,191 @@ if Nucl==36
                 [age] = pararrayfun (numCores, func, [1:1:n_trial]);
            else
                 %Matlab
-                parfor i=1:n_trial
-                    age(i) =feval(func,i);
+                parfor k=1:n_trial
+                    age(k) =feval(func,k);
+                    h = waitbar(k/n_trial)
                 end    
+                    close(h)
            end
             end
            
-           Mean_age = mean(age)
-           Std_age = std(age)
+           Age_MC = mean(age)./1000;
+           Err_MC = std(age)./1000;
            
            % best age
-           dataset(1,:) = Data.NuclCon(:);
-           dataset(2,:) = Data.NuclErr(:);
-           dataset(3,:) = Data.Z(:);
-           Best_age = Find_age(Const_cosmo, Param_cosmo, Param_site, Sf, dataset, erosion, t_guess, flag);
+           dataset(1,1) = Data.NuclCon(is);
+           dataset(2,1) = Data.NuclErr(is);
+           dataset(3,1) = Data.Z(is);
+           AgeCosmo = Find_age(Const_cosmo, Param_cosmo, Param_site, Sf{is}, dataset, erosion, t_guess, flag)
            
-           % error propagation
+           if isreal(AgeCosmo)==0; % check error
+               ErrPRflag=1;
+               AgeCosmo=-100;
+           end
+           
            
             % 2. Assume there is some value of P_effective that satisfies the simple exposure age equation. N = (P_effective/lambda)*(1-exp(-lambda*t))
             
-                P_effective = dataset(1,:).*Const_cosmo.lambda36./(1-exp(-Const_cosmo.lambda36.*Best_age))
+                P_effective = Data.NuclCon(is).*Const_cosmo.lambda36./(1-exp(-Const_cosmo.lambda36.*AgeCosmo));
                 
             % 3. Estimate the total uncertainty on P_effective by adding up uncertainties on the individual production rates from K, Ca, Cl, and then scaling to whatever the value of P_effective is. Each one of those includes both an uncertainty in the element concentration and an uncertainty in the reference production rate. 
-                           % get current scaling factors.
-                    t_vector = [0:100:Best_age];
-                    currentsf=getcurrentsf(Sf,t_vector./1000,flag.scaling_model,'cl');
-                    Sf.currentsf = currentsf;
-                P36_tot = prodz36_speed(Const_cosmo,Param_cosmo{1},Sf,Data.Z(1).*Param_site{1}.rho_rock)
-                P_sc_fact = P_effective./P36_tot;         
+                    % get current scaling factors.
+                    t_vector = [0:100:AgeCosmo];
+                    currentsf=getcurrentsf(Sf{is},t_vector./1000,flag);
+                    Sf{is}.currentsf = currentsf;
                     
-                    % Spallation uncertainties
-
-                        %Psi_Cl36_K_0_uncert = 7.8 ;% Spallation production rate at surface of 39K (at of Cl36 /g of Ca per yr)
-                        %Psi_Cl36_Ti_0_uncert = 3 ; % Spallation production rate at surface of Ti (at of Cl36 /g of Ca per yr)
-                        %Psi_Cl36_Fe_0_uncert = 0.2 ; % Spallation production rate at surface of Fe (at of Cl36 /g of Ca per yr)
-                    Const_cosmo_uncert = Const_cosmo;
-                    Const_cosmo_uncert.Psi_Cl36_Ca_0 = Const_cosmo.Psi_Cl36_Ca_0 + Const_cosmo.Psi_Cl36_Ca_0_uncert;
-                    P36_uncert = prodz36_speed(Const_cosmo_uncert,Param_cosmo{1},Sf,Data.Z(1).*Param_site{1}.rho_rock)
-                    D_P36_effective = (P36_uncert-P36_tot) .* P_sc_fact
+                    % Settings to compute uncertainties
                     
-            % 4. Solve for t to get t = (-1/lambda)*ln(1 - N*lambda/P_effective), and propagate the uncertainty on N (Cl-36 measurement uncertainty) and P_effective (from above) using the normal linear error propagation formula.           
-           
-           
-%            % simple propagation
-%                 % best
-                 dataset(1,:) = Data.NuclCon(:);
-%                 dataset(2,:) = Data.NuclErr(:);
-%                 dataset(3,:) = Data.Z(:);
-%             Best_age = Find_age(Const_cosmo, Param_cosmo, Param_site, Sf, dataset, erosion, t_guess, flag)
-%                 %down
-%             dataset(1,:) = Data.NuclCon(:)-Data.NuclErr(:);
-%             Down_age = Find_age(Const_cosmo, Param_cosmo, Param_site, Sf, dataset, erosion, t_guess, flag)
-%             
-%                 %up
-%             dataset(1,:) = Data.NuclCon(:)+Data.NuclErr(:);
-%             Up_age = Find_age(Const_cosmo, Param_cosmo, Param_site, Sf, dataset, erosion, t_guess, flag)             
-               
+                        % Monte Carlo sampling of p_f_0 to obtain the propagated uncertainty on P_th
+                        % and P_eth ? yes or no. If no, the uncertainty is 25%
+                        flag.uncert.pf0_mc='no';
+                        
+                    % uncertainty on the Production rate , in %   
+                    P36_uncert = get_36Cl_uncert(Data_formatted,Const_cosmo,Param_cosmo{1},Param_site{1},Sf{is},Data.Z(1).*Param_site{1}.rho_rock,flag);
+                    
+            % 4. Propagate the uncertainty on N (Cl-36 measurement uncertainty) and P_effective (from above) using the normal linear error propagation formula.        
+                    ErrCosmo = (((-1/Const_cosmo.lambda36)./(1 - Data_formatted{1}.N36Cl.meas*Const_cosmo.lambda36/P_effective) ...
+                        .*(Data_formatted{1}.N36Cl.meas*Const_cosmo.lambda36/(P_effective.^2)))^2).^.5  ...
+                        .*P36_uncert.*P_effective; % in year
+                
+             % yr to kyr
+                AgeCosmo = AgeCosmo./1000;
+                ErrCosmo = ErrCosmo./1000;
+             
+                [XPDFCosmo,PDFCosmo] = PDF_from_Age( AgeCosmo,ErrCosmo );
+                [XPDF_MC,PDF_MC] = PDF_from_Age( Age_MC,Err_MC );
+                
+                figure(1)
+                plot(XPDFCosmo,PDFCosmo); hold on
+                plot(XPDF_MC,PDF_MC); hold on
+                
+                figure(2)
+                histogram(age);
+                
+             % OUTPUT   
+                ExitMat(is,1) = .0;
+                ExitMat(is,2)=AgeCosmo;
+                ExitMat(is,3)=ErrCosmo;
+                ExitMat(is,4)=ErrCosmo;
+                CellPDF{2*is-1}=XPDFCosmo;
+                CellPDF{2*is}=PDFCosmo;
+                
+              % Look if there is a problem with the length of the database
+                if isempty(XPDFCosmo)==1;
+                    ErrCol(is)=1;
+                    if ErrPRflag==1;
+                        Mess=sprintf('Production rate too low');
+                    elseif isnan(AgeCosmo)==1;
+                        Mess=sprintf('Sample too old for the Geomagnetic database');
+                %         elseif Age<2; Chope if to young ?
+                %             Mess=sprintf('Sample too young to provide probability density distribution');
+                    else
+                        Mess=sprintf('Relative error bar too large to provide probability density function (excursion in negative ages or ages older than the Geomagnetic database)');
+                    end
+                else
+                    Mess=sprintf('Ok');
+                end
+                
+                StatCell{is}=Mess;
+                
+                    
+    end % end loop over samples    
 else
 
 %% Calculating
-for i=1:NbSpl;
+for is=1:NbSpl;
     % waitbar((i+1)/(NbSpl+3))
     ErrPRflag=0;
     % Preliminary corrections
-    ThickCorr=(Attlg/(VecThick(i)*VecDens(i)))*(1-exp(-1*(VecThick(i)*VecDens(i))/Attlg));
-    CorrConc=VecConc(i)/(ThickCorr*VecShield(i));
+    ThickCorr=(Attlg/(VecThick(is)*VecDens(is)))*(1-exp(-1*(VecThick(is)*VecDens(is))/Attlg));
+    CorrConc=VecConc(is)/(ThickCorr*VecShield(is));
     
     if Scheme==1; % Lal-Stone Scaling
         
         % CosmoAge calculation
-        StoneFactor=StoneFactV2(VecLat(i),VecLon(i),VecAlt(i),Atm);
+        StoneFactor=StoneFactV2(VecLat(is),VecLon(is),VecAlt(is),Atm);
         if Nucl==3;
-            if VecErosion(i)==0;
+            if VecErosion(is)==0;
                 CosmoAge=CorrConc/(SelPR(1)*1000*StoneFactor);
             else
-                CosmoAge=(-1/(VecMu(i)*VecErosion(i)))*log(1-(VecMu(i)*VecErosion(i)*CorrConc/(SelPR(1)*StoneFactor)))/1000;
+                CosmoAge=(-1/(VecMu(is)*VecErosion(is)))*log(1-(VecMu(is)*VecErosion(is)*CorrConc/(SelPR(1)*StoneFactor)))/1000;
                 if isreal(CosmoAge)==0;
                     ErrPRflag=1;
                     CosmoAge=-100;
                 end
             end
         elseif Nucl==10;
-            CosmoAge=(-1/(Lambda10Be+VecMu(i)*VecErosion(i)))*log(1-((Lambda10Be+VecMu(i)*VecErosion(i))*CorrConc/(SelPR(1)*StoneFactor)))/1000;
+            CosmoAge=(-1/(Lambda10Be+VecMu(is)*VecErosion(is)))*log(1-((Lambda10Be+VecMu(is)*VecErosion(is))*CorrConc/(SelPR(1)*StoneFactor)))/1000;
             if isreal(CosmoAge)==0;
                 ErrPRflag=1;
                 CosmoAge=-100;
             end
         end
-        ErrCosmo=CosmoAge*VecErrConc(i)/VecConc(i);
+        ErrCosmo=CosmoAge*VecErrConc(is)/VecConc(is);
         
         % Time-dependent integration-correction
-        [Age,Err,Err2,X,Y]=AgeCosmoAgeReelV22(CosmoAge,ErrCosmo,(SelPR(2)/SelPR(1)),VecLat(i),VecLon(i),VecAlt(i),SelGMDB,Atm,ERA40lat,ERA40lon,meanP,meanT);
+        [Age,Err,Err2,X,Y]=AgeCosmoAgeReelV22(CosmoAge,ErrCosmo,(SelPR(2)/SelPR(1)),VecLat(is),VecLon(is),VecAlt(is),SelGMDB,Atm,ERA40lat,ERA40lon,meanP,meanT);
         
     else % LSD Scaling
         
         if NumGMDB==3;
             % CosmoAge calculation
-            [~,SF]=LSDv9(VecLat(i),VecLon(i),VecAlt(i),Atm,0,-1,Nucl,NumGMDB);
+            [~,SF]=LSDv9(VecLat(is),VecLon(is),VecAlt(is),Atm,0,-1,Nucl,NumGMDB);
             if Nucl==3;
-                if VecErosion(i)==0;
+                if VecErosion(is)==0;
                     CosmoAge=CorrConc/(SelPR(1)*1000*SF);
                 else
-                    CosmoAge=(-1/(VecMu(i)*VecErosion(i)))*log(1-(VecMu(i)*VecErosion(i)*CorrConc/(SelPR(1)*SF)))/1000;
+                    CosmoAge=(-1/(VecMu(is)*VecErosion(is)))*log(1-(VecMu(is)*VecErosion(is)*CorrConc/(SelPR(1)*SF)))/1000;
                     if isreal(CosmoAge)==0;
                         ErrPRflag=1;
                         CosmoAge=-100;
                     end
                 end
             else
-                CosmoAge=(-1/(Lambda10Be+VecMu(i)*VecErosion(i)))*log(1-((Lambda10Be+VecMu(i)*VecErosion(i))*CorrConc/(SelPR(1)*SF)))/1000;
+                CosmoAge=(-1/(Lambda10Be+VecMu(is)*VecErosion(is)))*log(1-((Lambda10Be+VecMu(is)*VecErosion(is))*CorrConc/(SelPR(1)*SF)))/1000;
                 if isreal(CosmoAge)==0;
                     ErrPRflag=1;
                     CosmoAge=-100;
                 end
             end
-            ErrCosmo=CosmoAge*VecErrConc(i)/VecConc(i);
+            ErrCosmo=CosmoAge*VecErrConc(is)/VecConc(is);
             % Time corrected age calculation
-            [Age,Err,Err2,X,Y] = AgeCosmoAgeReelLSD(CosmoAge,ErrCosmo,(SelPR(2)/SelPR(1)),VecLat(i),VecLon(i),VecAlt(i),NumGMDB,Atm,Nucl);
+            [Age,Err,Err2,X,Y] = AgeCosmoAgeReelLSD(CosmoAge,ErrCosmo,(SelPR(2)/SelPR(1)),VecLat(is),VecLon(is),VecAlt(is),NumGMDB,Atm,Nucl);
         else
             % CosmoAge calculation
-            [~,SF]=LSDv9(VecLat(i),VecLon(i),VecAlt(i),Atm,0,-1,Nucl,SelGMDB);
+            [~,SF]=LSDv9(VecLat(is),VecLon(is),VecAlt(is),Atm,0,-1,Nucl,SelGMDB);
             if Nucl==3;
-                if VecErosion(i)==0;
+                if VecErosion(is)==0;
                     CosmoAge=CorrConc/(SelPR(1)*1000*SF);
                 else
-                    CosmoAge=(-1/(VecMu(i)*VecErosion(i)))*log(1-(VecMu(i)*VecErosion(i)*CorrConc/(SelPR(1)*SF)))/1000;
+                    CosmoAge=(-1/(VecMu(is)*VecErosion(is)))*log(1-(VecMu(is)*VecErosion(is)*CorrConc/(SelPR(1)*SF)))/1000;
                     if isreal(CosmoAge)==0;
                         ErrPRflag=1;
                         CosmoAge=-100;
                     end
                 end
             else
-                CosmoAge=(-1/(Lambda10Be+VecMu(i)*VecErosion(i)))*log(1-((Lambda10Be+VecMu(i)*VecErosion(i))*CorrConc/(SelPR(1)*SF)))/1000;
+                CosmoAge=(-1/(Lambda10Be+VecMu(is)*VecErosion(is)))*log(1-((Lambda10Be+VecMu(is)*VecErosion(is))*CorrConc/(SelPR(1)*SF)))/1000;
                 if isreal(CosmoAge)==0;
                     ErrPRflag=1;
                     CosmoAge=-100;
                 end
             end
-            ErrCosmo=CosmoAge*VecErrConc(i)/VecConc(i);
+            ErrCosmo=CosmoAge*VecErrConc(is)/VecConc(is);
             % Time corrected age calculation
-            [Age,Err,Err2,X,Y] = AgeCosmoAgeReelLSD(CosmoAge,ErrCosmo,(SelPR(2)/SelPR(1)),VecLat(i),VecLon(i),VecAlt(i),SelGMDB,Atm,Nucl);
+            [Age,Err,Err2,X,Y] = AgeCosmoAgeReelLSD(CosmoAge,ErrCosmo,(SelPR(2)/SelPR(1)),VecLat(is),VecLon(is),VecAlt(is),SelGMDB,Atm,Nucl);
         end
     end
     
-    ExitMat(i,2)=Age;
-    ExitMat(i,3)=Err;
-    ExitMat(i,4)=Err2;
-    CellPDF{2*i-1}=X;
-    CellPDF{2*i}=Y;
+    ExitMat(is,2)=Age;
+    ExitMat(is,3)=Err;
+    ExitMat(is,4)=Err2;
+    CellPDF{2*is-1}=X;
+    CellPDF{2*is}=Y;
     
     % Look if there is a problem with the length of the database
     if isempty(X)==1;
-        ErrCol(i)=1;
+        ErrCol(is)=1;
         if ErrPRflag==1;
             Mess=sprintf('Production rate too low');
         elseif isnan(Age)==1;
@@ -369,7 +397,7 @@ for i=1:NbSpl;
     else
         Mess=sprintf('Ok');
     end
-    StatCell{i}=Mess;
+    StatCell{is}=Mess;
     
     % Store the time correctd scaling factor
     if Nucl==3;
@@ -377,7 +405,8 @@ for i=1:NbSpl;
     else
         SFtc=CorrConc*Lambda10Be/(SelPR(1)*(1-exp(-Lambda10Be*Age*1000)));
     end
-    ExitMat(i,1)=SFtc;
+    ExitMat(is,1)=SFtc;
+end
 end
 
 MatPDF=CreeMatCP4(CellPDF,0.01);
@@ -389,9 +418,9 @@ MatPDF(ToExit,:)=[];
 % Fill PDFtable
 VecName2=cell(1,NbSpl);
 ifill=1;
-for i=1:NbSpl;
-    if ErrCol(i)==0;
-        VecName2{ifill}=VecName{i};
+for is=1:NbSpl;
+    if ErrCol(is)==0;
+        VecName2{ifill}=VecName{is};
         ifill=ifill+1;
     end
 end
@@ -403,13 +432,13 @@ nbsigdisp=6;
 nbptdisp=500;
 
 if ifill>=2;
-    for i=1:ifill-1;
-        [~,~,Mediane,Err1SigInf,Err1SigSup,~,~]=ParamDistribV11(CellPDF{2*i-1},CellPDF{2*i});
-        Binf=max(0,max((Mediane-nbsigdisp*Err1SigInf),CellPDF{2*i-1}(1)));
-        Bsup=min(Mediane+nbsigdisp*Err1SigSup,CellPDF{2*i-1}(end));
+    for is=1:ifill-1;
+        [~,~,Mediane,Err1SigInf,Err1SigSup,~,~]=ParamDistribV11(CellPDF{2*is-1},CellPDF{2*is});
+        Binf=max(0,max((Mediane-nbsigdisp*Err1SigInf),CellPDF{2*is-1}(1)));
+        Bsup=min(Mediane+nbsigdisp*Err1SigSup,CellPDF{2*is-1}(end));
         ti=linspace(Binf,Bsup,nbptdisp);
-        pdfi=interp1(CellPDF{2*i-1},CellPDF{2*i},ti);
-        PDFdisp{i}=[ti' pdfi'];
+        pdfi=interp1(CellPDF{2*is-1},CellPDF{2*is},ti);
+        PDFdisp{is}=[ti' pdfi'];
     end
 else
     PDFdisp=[];
@@ -433,10 +462,9 @@ NameOut=strcat(name(1:end-2),'out');
 fileID=fopen(NameOut,'w');
 fprintf(fileID,'%s',DataOut);
 fclose(fileID);
-toc
+
 % Closing
-waitbar(1/1)
+%waitbar(1/1)
 % close(h)
 end
 
-end

@@ -1,4 +1,4 @@
-function [Data,Param_site,Const_cosmo] = Init_var(DATA_CREP)
+function [Data,Param_site,Const_cosmo] = Init_var(DATA_CREP,flag)
 % This function allows initialize the data, the cosmogenic constants, and 
 %   site-specific variables.
 % INPUT : 
@@ -82,11 +82,25 @@ Const_cosmo.Psi_Cl36_K_0 = DATA_CREP.Psi_Cl36_K_0 ;% Spallation production rate 
 Const_cosmo.Psi_Cl36_Ti_0 = DATA_CREP.Psi_Cl36_Ti_0 ; % Spallation production rate at surface of Ti (at of Cl36 /g of Ca per yr)
 Const_cosmo.Psi_Cl36_Fe_0 = DATA_CREP.Psi_Cl36_Fe_0 ; % Spallation production rate at surface of Fe (at of Cl36 /g of Ca per yr)
 
+% P_f_0: production rate of epithermal neutrons from fast neutrons in atmosphere at land/atm interface
+%           P_f_0 is choosen following the scaling model (Lal/Stone, or
+%           LSD) From Marrero 2015.
+    if(strcmp(flag.scaling_model,'st'))
+        Const_cosmo.P_f_0 = 691;  
+        Const_cosmo.P_f_0_uncert = 186;
+    elseif(strcmp(flag.scaling_model,'sa'))
+        Const_cosmo.P_f_0 = 759; 
+        Const_cosmo.P_f_0_uncert = 180;   
+    end    
+% phi_mu_f_0
+Const_cosmo.phi_mu_f_0 = 7.9e+5 ; % Fast muon flux at land surface, sea level, high latitude, Gosse & Phillips, 2001 (? cm-2 yr-1)
+
 % uncertainties
 Const_cosmo.Psi_Cl36_Ca_0_uncert = DATA_CREP.Psi_Cl36_Ca_0_uncert ;% spallation production rate for Ca, SLHL (at of Cl36 /g of Ca per yr)
 Const_cosmo.Psi_Cl36_K_0_uncert = DATA_CREP.Psi_Cl36_K_0_uncert ;% Spallation production rate at surface of 39K (at of Cl36 /g of Ca per yr)
 Const_cosmo.Psi_Cl36_Ti_0_uncert = DATA_CREP.Psi_Cl36_Ti_0_uncert ; % Spallation production rate at surface of Ti (at of Cl36 /g of Ca per yr)
 Const_cosmo.Psi_Cl36_Fe_0_uncert = DATA_CREP.Psi_Cl36_Fe_0_uncert ; % Spallation production rate at surface of Fe (at of Cl36 /g of Ca per yr)
+
 
 for i=1:N_samples
 

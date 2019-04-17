@@ -132,7 +132,8 @@ else
         GeoMDBNorm=GeoMDBNorm(:,1:VecIndice(1));
     end
 end
-
+    figure(3);plot(GeoMDBNorm(1,:),GeoMDBNorm(2,:));hold on
+    figure(4);plot(Paleomag(1,:),Paleomag(2,:));hold on
 % Fit to Trajectory-traced GAD dipole field as f(M/M0), as long-term average.
 dd = [6.89901,-103.241,522.061,-1152.15,1189.18,-448.004;];
 VecM=interp1(GeoMDBNorm(1,:),GeoMDBNorm(2,:),tv);
