@@ -13,9 +13,12 @@ load('Constants/OtherCst.mat');
 isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
 if isOctave
     pkg load parallel
+    pkg load statistics
+    name=strrep(name,"\\","/"); %OCTAVE !!!!!
+else
+    name=strrep(name,'\\','/'); %MATLAB !!!!!
 end
-%name=strrep(name,"\\","/"); %OCTAVE !!!!!
-name=strrep(name,'\\','/'); %MATLAB !!!!!
+
 % Retreive json file
 %Data=loadjson(name);
 % test the structure
@@ -169,7 +172,7 @@ if Nucl==36
 
         %t_guess = 10000;randi([flag.min_bounds flag.max_bounds],1,1);
 
-            n_trial = 200;
+            n_trial = 100;
             % preparing dataset integrating data uncertainty
             for k=1:n_trial
                 for j=1:length(NbSpl)                    
@@ -208,8 +211,8 @@ if Nucl==36
            end
             end
            
-           Age_MC = mean(age)./1000;
-           Err_MC = std(age)./1000;
+           Age_MC = mean(age)./1000
+           Err_MC = std(age)./1000
            
            % best age
            dataset(1,1) = Data.NuclCon(is);
@@ -248,8 +251,8 @@ if Nucl==36
                         .*P36_uncert.*P_effective; % in year
                 
              % yr to kyr
-                AgeCosmo = AgeCosmo./1000;
-                ErrCosmo = ErrCosmo./1000;
+                AgeCosmo = AgeCosmo./1000
+                ErrCosmo = ErrCosmo./1000
              
                 [XPDFCosmo,PDFCosmo] = PDF_from_Age( AgeCosmo,ErrCosmo );
                 [XPDF_MC,PDF_MC] = PDF_from_Age( Age_MC,Err_MC );
@@ -259,7 +262,11 @@ if Nucl==36
                 plot(XPDF_MC,PDF_MC); hold on
                 
                 figure(2)
-                histogram(age);
+                if isOctave
+                    hist(age);
+                else
+                    histogram(age);
+                end
                 
              % OUTPUT   
                 ExitMat(is,1) = .0;
